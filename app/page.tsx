@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { supabase } from "./lib/supabase"; // ou "@/lib/supabase"
+import { supabase } from "@/lib/supabase";
 
 const FOTOS:any={
 "12":"https://wsrv.nl/?url=https://upload.wikimedia.org/wikipedia/commons/6/6d/Ciro_Gomes_2024.jpg&w=200&h=200&fit=cover",
