@@ -39,7 +39,12 @@ export default function Resultados() {
             <div key={c.id} className="border border-gray-200 p-4 rounded-xl mb-3 flex justify-between items-center bg-white">
               <div className="flex items-center gap-3 flex-1">
                 <span className="bg-blue-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm shrink-0">{i + 1}º</span>
-                <img src={c.foto_url || `https://ui-avatars.com/api/?name=${c.nome}&background=0D8ABC&color=fff`} alt={c.nome} className="w-12 h-12 rounded-full object-cover border-2 border-blue-900 shrink-0" />
+                <img
+                  src={c.foto_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(c.nome)}&background=0D47A1&color=fff&bold=true`}
+                  alt={c.nome}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-blue-900 shrink-0 bg-gray-100"
+                  onError={(e: any) => { e.target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(c.nome)}&background=0D47A1&color=fff&bold=true` }}
+                />
                 <div className="flex-1">
                   <div className="font-bold text-black text-lg leading-tight">{c.nome}</div>
                   <div className="text-sm text-gray-600 font-medium">{c.partido} - {c.numero}</div>
@@ -47,7 +52,6 @@ export default function Resultados() {
                     <div className="h-2 bg-green-600 rounded-full" style={{ width: `${total? (c.votos / total) * 100 : 0}%` }}></div>
                   </div>
                 </div>
-              </div>
               <div className="text-right ml-3">
                 <div className="font-black text-black text-xl">{c.votos}</div>
                 <div className="text-xs text-gray-500">votos</div>
