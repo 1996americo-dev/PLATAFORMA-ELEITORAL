@@ -29,6 +29,7 @@ export default function HomeCorrigida() {
       <header style={{ borderBottom: '1px solid #1e293b', padding: '12px 0', position: 'sticky', top: 0, background: '#0a0e1a', zIndex: 10 }}>
         <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <h1 style={{ color: '#00ff88', fontWeight: 800, fontSize: 18 }}><span style={{ background: '#00ff88', color: '#000', padding: '2px 6px', borderRadius: 4, marginRight: 6 }}>BR</span>PLATAFORMA 2026</h1>
+          <Link href="/votacao" style={{ background: '#facc15', color: '#000', padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none', marginRight: 8 }}>🗳️ Urna</Link>
           <Link href="/admin" style={{ background: '#00ff88', color: '#000', padding: '6px 12px', borderRadius: 20, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>Admin</Link>
         </div>
       </header>
@@ -50,16 +51,19 @@ export default function HomeCorrigida() {
                   {c.foto_url ? <img src={c.foto_url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', opacity: 0.3 }}>Sem foto</div>}
                   <span style={{ position: 'absolute', top: 8, right: 8, background: '#00ff88', color: '#000', padding: '3px 8px', borderRadius: 6, fontSize: 10, fontWeight: 800 }}>{c.cargo}</span>
                 </div>
-              </Link>
-              <div style={{ padding: 12 }}>
-                <Link href={`/candidato?id=${c.id}`} style={{ textDecoration: 'none' }}><h3 style={{ color: '#00ff88', fontSize: 14, fontWeight: 700 }}>{c.nome} - {c.numero}</h3></Link>
+              </Link><div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+                <div style={{ padding: 12 }}>
+                <h3 style={{ color: '#00ff88', fontSize: 14, fontWeight: 700 }}>{c.nome} - {c.numero}</h3>
                 <p style={{ fontSize: 11, opacity: 0.7, marginTop: 4 }}><b>{c.partido}</b> | {c.cidade}</p>
                 <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
                   <Link href={`/candidato?id=${c.id}`} style={{ flex: 1, background: '#1e293b', color: 'white', padding: 6, borderRadius: 6, fontSize: 11, textAlign: 'center', textDecoration: 'none' }}>Ver perfil</Link>
-                  <a href={`https://wa.me/?text=${encodeURIComponent(`Veja ${c.nome}: https://plataforma-eleitoral-blond.vercel.app/candidato?id=${c.id}`)}`} target="_blank" style={{ flex: 1, background: '#25D366', color: 'white', padding: 6, borderRadius: 6, fontSize: 11, textAlign: 'center', textDecoration: 'none' }}>WhatsApp</a>
+                  <Link href={`/votacao?cargo=${c.cargo}`} style={{ flex: 1, background: '#facc15', color: '#000', padding: 6, borderRadius: 6, fontSize: 11, textAlign: 'center', textDecoration: 'none', fontWeight: 700 }}>Votar</Link>
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                  <Link href={`/comparar?id1=${c.id}&id2=${filtrados[0]?.id}`} style={{ flex: 1, background: '#151a29', border: '1px solid #1e293b', color: '#94a3b8', padding: 5, borderRadius: 6, fontSize: 10, textAlign: 'center', textDecoration: 'none' }}>⚔️ Comparar</Link>
+                  <a href={`https://wa.me/?text=${encodeURIComponent(`Veja ${c.nome}: https://plataforma-eleitoral-blond.vercel.app/candidato?id=${c.id}`)}`} target="_blank" style={{ flex: 1, background: '#25D366', color: 'white', padding: 5, borderRadius: 6, fontSize: 10, textAlign: 'center', textDecoration: 'none' }}>WhatsApp</a>
                 </div>
               </div>
-            </div>
           ))}
         </div>
       </div>
