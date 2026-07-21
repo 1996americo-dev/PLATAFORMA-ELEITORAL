@@ -1,12 +1,12 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { createClient } from '@supabase/supabase-js'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
 
-export default function PerfilSimples() {
+function ConteudoCandidato() {
   const searchParams = useSearchParams()
   const id = searchParams.get('id')
   const [c, setC] = useState<any>(null)
@@ -21,13 +21,13 @@ export default function PerfilSimples() {
     load()
   }, [id])
 
-  if(!id) return <div style={{ minHeight:'100vh', background:'#0a0e1a', color:'white', display:'flex', alignItems:'center', justifyContent:'center' }}>Nenhum candidato selecionado. <Link href="/" style={{ color:'#00ff88', marginLeft:8 }}>Voltar</Link></div>
+  if(!id) return <div style={{ minHeight:'100vh', background:'#0a0e1a', color:'white', display:'flex', alignItems:'center', justifyContent:'center' }}>Nenhum candidato. <Link href="/" style={{ color:'#00ff88', marginLeft:8 }}>Voltar</Link></div>
   if(!c) return <div style={{ minHeight:'100vh', background:'#0a0e1a', color:'white', display:'flex', alignItems:'center', justifyContent:'center' }}>Carregando...</div>
 
   return (
     <div style={{ minHeight:'100vh', background:'#0a0e1a', color:'white' }}>
       <div style={{ maxWidth:900, margin:'0 auto', padding:16 }}>
-        <Link href="/" style={{ color:'#00ff88', textDecoration:'none', fontSize:13 }}>← Voltar para lista</Link>
+        <Link href="/" style={{ color:'#00ff88', textDecoration:'none', fontSize:13 }}>← Voltar</Link>
         <div style={{ background:'#151a29', border:'1px solid #1e293b', borderRadius:20, overflow:'hidden', marginTop:16 }}>
           <div style={{ height:320, position:'relative', background:'#0f172a' }}>
             {c.foto_url && <img src={c.foto_url} style={{ width:'100%', height:'100%', objectFit:'cover' }} />}
@@ -47,11 +47,19 @@ export default function PerfilSimples() {
             {c.biografia && <div><h3 style={{ color:'#00ff88', marginBottom:8, fontSize:14 }}>👤 Biografia</h3><div style={{ background:'#0a0e1a', padding:14, borderRadius:12, fontSize:13, opacity:0.8 }}>{c.biografia}</div></div>}
             <div style={{ display:'flex', gap:10 }}>
               <button onClick={()=>setVotos(v=>v+1)} style={{ flex:1, background:'#00ff88', color:'#000', border:'none', padding:14, borderRadius:12, fontWeight:800, cursor:'pointer' }}>👍 Apoiar</button>
-              <a href={`https://wa.me/?text=${encodeURIComponent(`Veja ${c.nome} ${c.numero} para ${c.cargo}: https://plataforma-eleitoral-blond.vercel.app/candidato?id=${c.id}`)}`} target="_blank" style={{ flex:1, background:'#25D366', color:'white', padding:14, borderRadius:12, textAlign:'center', textDecoration:'none', fontWeight:700 }}>📱 WhatsApp</a>
+              <a href={`https://wa.me/?text=${encodeURIComponent(`Veja ${c.nome} ${c.numero} para ${c.cargo}`)}`} target="_blank" style={{ flex:1, background:'#25D366', color:'white', padding:14, borderRadius:12, textAlign:'center', textDecoration:'none', fontWeight:700 }}>📱 WhatsApp</a>
             </div>
           </div>
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PageCandidato() {
+  return (
+    <Suspense fallback={<div style={{ minHeight:'100vh', background:'#0a0e1a', color:'white', display:'flex', alignItems:'center', justifyContent:'center' }}>Carregando perfil...</div>}>
+      <ConteudoCandidato />
+    </Suspense>
   )
 }
