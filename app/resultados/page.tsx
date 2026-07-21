@@ -11,8 +11,8 @@ export default function Resultados() {
     async function load() {
       setLoading(true);
       const { data } = await supabase
-       .from("votos")
-       .select("candidato_id, candidatos(nome, partido, numero)");
+      .from("votos")
+      .select("candidato_id, candidatos(nome, partido, numero)");
 
       if (!data) {
         setLoading(false);
@@ -51,33 +51,44 @@ export default function Resultados() {
 
         <div className="bg-white p-6 rounded-2xl shadow-2xl">
           {ranking.length === 0 &&!loading && (
-            <p className="text-center text-gray-500">Nenhum voto ainda</p>
+            <p className="text-center text-gray-500 py-8">
+              Nenhum voto ainda. Seja o primeiro!
+            </p>
           )}
 
           {ranking.map((c: any, i) => (
             <div
               key={c.id}
-              className="border p-4 rounded-xl mb-3 flex justify-between items-center"
+              className="border border-gray-200 p-4 rounded-xl mb-3 flex justify-between items-center bg-white"
             >
               <div className="flex-1">
-                <span className="font-bold">
-                  {i + 1}º {c.nome}
-                </span>
-                <span className="text-sm text-gray-600 ml-2">
-                  {c.partido} - {c.numero}
-                </span>
-                <div className="w-full max-w- h-2 bg-gray-200 rounded mt-2">
+                <div className="flex items-center gap-2">
+                  <span className="bg-blue-900 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm">
+                    {i + 1}º
+                  </span>
+                  <div>
+                    <div className="font-bold text-black text-lg leading-tight">
+                      {c.nome}
+                    </div>
+                    <div className="text-sm text-gray-600 font-medium">
+                      {c.partido} - {c.numero}
+                    </div>
+                  </div>
+                </div>
+                <div className="w-full h-3 bg-gray-200 rounded-full mt-3 overflow-hidden">
                   <div
-                    className="h-2 bg-green-600 rounded"
+                    className="h-3 bg-green-600 rounded-full transition-all duration-1000"
                     style={{
                       width: `${total? (c.votos / total) * 100 : 0}%`,
                     }}
                   ></div>
                 </div>
               </div>
-              <div className="text-right ml-4">
-                <div className="font-bold text-lg">{c.votos} votos</div>
-                <div className="text-sm text-gray-600">
+
+              <div className="text-right ml-4 min-w-">
+                <div className="font-black text-black text-xl">{c.votos}</div>
+                <div className="text-sm text-gray-500">votos</div>
+                <div className="font-bold text-green-700 text-sm">
                   {total? ((c.votos / total) * 100).toFixed(1) : 0}%
                 </div>
               </div>
@@ -87,7 +98,7 @@ export default function Resultados() {
 
         <a
           href="/votacao"
-          className="block text-center mt-6 bg-white text-blue-900 p-3 rounded-lg font-bold"
+          className="block text-center mt-6 bg-white text-blue-900 p-4 rounded-xl font-bold shadow-xl hover:bg-gray-100"
         >
           ← Voltar para Urna
         </a>
