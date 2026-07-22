@@ -6,7 +6,6 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 const SUPABASE_URL = "https://xvhtuacgagthzvusybsg.supabase.co"
 const BUCKET = "fotos-candidatos"
 
-// CORRIGIDO COM NOMES EXATOS DO SEU BUCKET (print 2)
 const fotosReais: Record<string, string> = {
   "13-lula": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/lula.jpg`,
   "22-bolsonaro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/bolsonaro.webp`,
@@ -20,13 +19,11 @@ const fotosReais: Record<string, string> = {
   "45-leite": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/leite.jpg`,
 }
 
-function Avatar({ id, nome, cor, size=56 }: {id:string, nome:string, cor:string, size?:number}) {
+function Avatar({ id, nome, cor, size = 56 }: { id: string; nome: string; cor: string; size?: number }) {
   const [erro, setErro] = useState(false)
-  const iniciais = nome.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()
+  const iniciais = nome.split(' ').map((n:string)=>n[0]).slice(0,2).join('').toUpperCase()
   const url = fotosReais[id]
-  if (erro) {
-    return <div style={{width:size, height:size, background:cor, fontSize:size*0.32}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 border-2">{iniciais}</div>
-  }
+  if (erro) return <div style={{width:size, height:size, background:cor, fontSize:size*0.32}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 border-2">{iniciais}</div>
   return <img src={url} onError={()=>setErro(true)} style={{width:size, height:size, border:`3px solid ${cor}`}} className="rounded-full object-cover shrink-0 bg-white" alt={nome} />
 }
 
@@ -52,43 +49,53 @@ export default function Page() {
   const [toast, setToast] = useState<string|null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const carregar = async () => {
-      setLoading(true)
-      if (!isSupabaseConfigured) {
-        const salvo = localStorage.getItem('votos_v3')
-        if (salvo) setVotos(JSON.parse(salvo))
-        setLoading(false)
-        return
-      }
-      const { data } = await supabase.from('votos').select('candidato_id')
-      if (data) {
-        const cont: Record<string, number> = {}
-        data.forEach(r => { cont[r.candidato_id] = (cont[r.candidato_id] || 0) + 1 })
-        setVotos(cont)
-      }
-      const channel = supabase.channel('v3-fotos-corrigido')
-        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votos' }, (payload:any) => {
-          const id = payload.new.candidato_id
-          setVotos(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
-        }).subscribe()
-      setLoading(false)
-      return () => { supabase.removeChannel(channel) }
+  const carregarVotos = async () => {
+    if (!isSupabaseConfigured) {
+      const salvo = localStorage.getItem('votos_v3')
+      if (salvo) setVotos(JSON.parse(salvo))
+      return
     }
-    carregar()
+    const { data } = await supabase.from('votos').select('candidato_id')
+    if (data) {
+      const cont: Record<string, number> = {}
+      data.forEach(r => { cont[r.candidato_id] = (cont[r.candidato_id] || 0) + 1 })
+      setVotos(cont)
+    }
+  }
+
+  useEffect(() => {
+    const init = async () => {
+      setLoading(true)
+      await carregarVotos()
+      if (isSupabaseConfigured) {
+        const channel = supabase.channel('v3-fix-typescript')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votos' }, async () => { await carregarVotos() }).subscribe()
+        setLoading(false)
+        return () => { supabase.removeChannel(channel) }
+      }
+      setLoading(false)
+    }
+    init()
   }, [])
 
   const handleVotar = async (id: string) => {
     const cand = candidatosData.find(c => c.id === id)
-    if (isSupabaseConfigured) {
-      await supabase.from('votos').insert({ candidato_id: id })
-    } else {
+    if (!isSupabaseConfigured) {
       const novo = { ...votos, [id]: (votos[id] || 0) + 1 }
       setVotos(novo)
       localStorage.setItem('votos_v3', JSON.stringify(novo))
+      setToast(`Voto computado para ${cand?.nome}!`)
+      setTimeout(() => setToast(null), 3000)
+      return
     }
-    setToast(`Voto computado para ${cand?.nome}!`)
-    setTimeout(() => setToast(null), 3000)
+    const { error } = await supabase.from('votos').insert({ candidato_id: id })
+    if (error) {
+      setToast(`ERRO: ${error.message}`)
+    } else {
+      setVotos(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
+      setToast(`Voto computado para ${cand?.nome}!`)
+    }
+    setTimeout(() => setToast(null), 4000)
   }
 
   const total = Object.values(votos).reduce((a,b)=>a+b,0)
@@ -125,8 +132,9 @@ export default function Page() {
             <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center"><Trophy className="w-5 h-5"/></div>
             <div>
               <h2 className="font-bold">Ranking em tempo real</h2>
-              <p className="text-xs text-emerald-600 flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"/> {total.toLocaleString()} votos computados • atualiza ao vivo {loading && "(carregando...)"}</p>
+              <p className="text-xs text-emerald-600 flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"/> {total} votos computados • atualiza ao vivo {loading && "(carregando...)"}</p>
             </div>
+            <button onClick={carregarVotos} className="ml-auto text-xs bg-slate-100 px-3 py-1 rounded-full">Atualizar</button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {ranking.slice(0,4).map((c,i)=> {
@@ -139,8 +147,8 @@ export default function Page() {
                     <Avatar id={c.id} nome={c.nome} cor={c.cor} size={28}/>
                     <span className="font-bold text-sm truncate">{c.nome.split(' ')[0]}</span>
                   </div>
-                  <div className="h-2 bg-black/10 rounded-full overflow-hidden"><div className="h-full bg-yellow-400" style={{width:`${pct}%`}}/></div>
-                  <div className="flex justify-between mt-2 text-xs opacity-80"><span>{c.partido} • {v}</span><span className="font-bold">{pct}%</span></div>
+                  <div className="h-2 bg-black/20 rounded-full overflow-hidden"><div className="h-full bg-yellow-400 transition-all duration-500" style={{width:`${pct}%`}}/></div>
+                  <div className="flex justify-between mt-2 text-xs"><span>{c.partido} • {v}</span><span className="font-bold">{pct}%</span></div>
                 </div>
               )
             })}
@@ -173,7 +181,7 @@ export default function Page() {
               </div>
               <p className="text-[11px] text-slate-600 mt-3">{c.bio}</p>
               <div className="mt-3">
-                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full" style={{width:`${pct}%`, background:c.cor}}/></div>
+                <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full transition-all duration-500" style={{width:`${pct}%`, background:c.cor}}/></div>
                 <div className="flex justify-between text-[10px] mt-1 text-slate-500"><span>{v} votos</span><span>{pct}%</span></div>
               </div>
               <button onClick={()=>handleVotar(c.id)} className="w-full mt-3 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-black flex items-center justify-center gap-2"><Award className="w-4 h-4"/> VOTAR • {c.numero}</button>
@@ -213,7 +221,7 @@ export default function Page() {
         </div>
       )}
 
-      {toast && <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl z-50 animate-bounce">{toast}</div>}
+      {toast && <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl z-50 animate-bounce max-w-[90%] text-center">{toast}</div>}
     </div>
   )
 }
