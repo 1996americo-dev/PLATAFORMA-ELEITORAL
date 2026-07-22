@@ -1,10 +1,11 @@
 "use client"
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Scale, Award, X, Trophy, CheckCircle } from 'lucide-react';
+import { Search, Scale, Award, X, Trophy, CheckCircle, Share2, ShieldAlert, BarChart3, Lock } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
 const SUPABASE_URL = "https://xvhtuacgagthzvusybsg.supabase.co"
 const BUCKET = "fotos-candidatos"
+const SITE_URL = "https://plataforma-eleitoral-2026-ftnt7zbir-americo2.vercel.app"
 
 const fotosReais: Record<string, string> = {
   "13-lula": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/lula.jpg`,
@@ -19,11 +20,11 @@ const fotosReais: Record<string, string> = {
   "45-leite": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/leite.jpg`,
 }
 
-function Avatar({ id, nome, cor, size = 56 }: { id: string; nome: string; cor: string; size?: number }) {
+function Avatar({ id, nome, cor, size=56 }: {id:string, nome:string, cor:string, size?:number}) {
   const [erro, setErro] = useState(false)
-  const iniciais = nome.split(' ').map((n:string)=>n[0]).slice(0,2).join('').toUpperCase()
+  const iniciais = nome.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()
   const url = fotosReais[id]
-  if (erro) return <div style={{width:size, height:size, background:cor, fontSize:size*0.32}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 border-2">{iniciais}</div>
+  if (erro) return <div style={{width:size, height:size, background:cor, fontSize:size!*0.32}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 border-2">{iniciais}</div>
   return <img src={url} onError={()=>setErro(true)} style={{width:size, height:size, border:`3px solid ${cor}`}} className="rounded-full object-cover shrink-0 bg-white" alt={nome} />
 }
 
@@ -40,14 +41,20 @@ const candidatosData = [
   { id: "45-leite", nome: "Eduardo Leite", partido: "PSDB", numero: "45", cor: "#2563EB", propostas: ["Reforma do RS", "Centro democrático", "Gestão jovem"], bio: "Governador do RS" },
 ]
 
-export default function Page() {
+export default function PageV4() {
   const [busca, setBusca] = useState("")
   const [filtro, setFiltro] = useState("TODOS")
   const [votos, setVotos] = useState<Record<string, number>>({})
+  const [meuVoto, setMeuVoto] = useState<string|null>(null)
   const [selecionados, setSelecionados] = useState<string[]>([])
   const [showCompare, setShowCompare] = useState(false)
   const [toast, setToast] = useState<string|null>(null)
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const salvo = localStorage.getItem('meu_voto_v4')
+    if (salvo) setMeuVoto(salvo)
+  }, [])
 
   const carregarVotos = async () => {
     if (!isSupabaseConfigured) {
@@ -68,8 +75,9 @@ export default function Page() {
       setLoading(true)
       await carregarVotos()
       if (isSupabaseConfigured) {
-        const channel = supabase.channel('v3-fix-typescript')
-          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votos' }, async () => { await carregarVotos() }).subscribe()
+        const channel = supabase.channel('v4-final')
+          .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votos' }, async () => { await carregarVotos() })
+          .subscribe()
         setLoading(false)
         return () => { supabase.removeChannel(channel) }
       }
@@ -79,23 +87,27 @@ export default function Page() {
   }, [])
 
   const handleVotar = async (id: string) => {
-    const cand = candidatosData.find(c => c.id === id)
-    if (!isSupabaseConfigured) {
-      const novo = { ...votos, [id]: (votos[id] || 0) + 1 }
-      setVotos(novo)
-      localStorage.setItem('votos_v3', JSON.stringify(novo))
-      setToast(`Voto computado para ${cand?.nome}!`)
-      setTimeout(() => setToast(null), 3000)
+    if (meuVoto) {
+      setToast(`Você já votou no ${candidatosData.find(c=>c.id===meuVoto)?.nome}! Só 1 voto por celular. (Admin pode resetar em /admin)`)
+      setTimeout(()=>setToast(null), 4000)
       return
     }
-    const { error } = await supabase.from('votos').insert({ candidato_id: id })
-    if (error) {
-      setToast(`ERRO: ${error.message}`)
-    } else {
-      setVotos(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
-      setToast(`Voto computado para ${cand?.nome}!`)
+    const cand = candidatosData.find(c => c.id === id)
+    if (isSupabaseConfigured) {
+      const { error } = await supabase.from('votos').insert({ candidato_id: id })
+      if (error) { setToast(`Erro: ${error.message}`); return }
     }
-    setTimeout(() => setToast(null), 4000)
+    setVotos(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
+    localStorage.setItem('meu_voto_v4', id)
+    setMeuVoto(id)
+    setToast(`✅ Voto computado para ${cand?.nome}! Obrigado por participar!`)
+    setTimeout(()=>setToast(null), 4000)
+  }
+
+  const handleShare = (c: typeof candidatosData[0]) => {
+    const texto = `Acabei de votar no ${c.nome} (${c.partido}) na Plataforma Eleitoral 2026! 🗳️ Vota você também: ${SITE_URL}`
+    const url = `https://wa.me/?text=${encodeURIComponent(texto)}`
+    window.open(url, '_blank')
   }
 
   const total = Object.values(votos).reduce((a,b)=>a+b,0)
@@ -115,24 +127,40 @@ export default function Page() {
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold">26</div>
             <div>
-              <h1 className="font-black tracking-tight leading-none">PLATAFORMA ELEITORAL 2026</h1>
-              <p className="text-[10px] tracking-[0.2em] text-slate-500 font-bold">FOTOS REAIS • RANKING GLOBAL • VOTAÇÃO SIMULADA</p>
+              <h1 className="font-black tracking-tight leading-none">PLATAFORMA ELEITORAL 2026 • V4</h1>
+              <p className="text-[10px] tracking-[0.2em] text-slate-500 font-bold">ANTI-FRAUDE • SHARE WHATSAPP • /ADMIN</p>
             </div>
           </div>
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
-            <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar candidato ou partido" className="pl-10 pr-4 py-2 rounded-full bg-slate-100 text-sm w-72 focus:outline-none focus:ring-2 focus:ring-slate-900"/>
+          <div className="flex items-center gap-3">
+            <a href="/admin" className="hidden md:flex items-center gap-1 text-xs bg-slate-900 text-white px-3 py-2 rounded-full font-bold"><Lock className="w-3 h-3"/> ADMIN</a>
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-400"/>
+              <input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar candidato" className="pl-10 pr-4 py-2 rounded-full bg-slate-100 text-sm w-48 md:w-72 focus:outline-none focus:ring-2 focus:ring-slate-900"/>
+            </div>
           </div>
         </div>
       </header>
+
+      {meuVoto && (
+        <div className="max-w-7xl mx-auto px-6 mt-4">
+          <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-4 flex items-center gap-3">
+            <CheckCircle className="w-6 h-6 text-emerald-600"/>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-emerald-900">Você já votou no {candidatosData.find(c=>c.id===meuVoto)?.nome}! ✅</p>
+              <p className="text-xs text-emerald-700">Seu voto já está no ranking global. Só 1 voto por celular pra evitar fraude.</p>
+            </div>
+            <button onClick={()=>handleShare(candidatosData.find(c=>c.id===meuVoto)!)} className="bg-emerald-600 text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-1"><Share2 className="w-4 h-4"/> Compartilhar</button>
+          </div>
+        </div>
+      )}
 
       <div className="max-w-7xl mx-auto px-6 mt-6">
         <div className="bg-white rounded-[24px] p-6 shadow-sm border border-slate-200">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center"><Trophy className="w-5 h-5"/></div>
             <div>
-              <h2 className="font-bold">Ranking em tempo real</h2>
-              <p className="text-xs text-emerald-600 flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"/> {total} votos computados • atualiza ao vivo {loading && "(carregando...)"}</p>
+              <h2 className="font-bold flex items-center gap-2">Ranking em tempo real {loading && "(carregando...)"} <span className="bg-slate-900 text-white text-[10px] px-2 py-0.5 rounded-full">V4 ANTI-FRAUDE</span></h2>
+              <p className="text-xs text-emerald-600 flex items-center gap-1"><span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"/> {total} votos computados • atualiza ao vivo</p>
             </div>
             <button onClick={carregarVotos} className="ml-auto text-xs bg-slate-100 px-3 py-1 rounded-full">Atualizar</button>
           </div>
@@ -167,8 +195,10 @@ export default function Page() {
           const v = votos[c.id]||0
           const pct = total ? (v/total*100).toFixed(1) : "0"
           const sel = selecionados.includes(c.id)
+          const jaVoteiNele = meuVoto===c.id
           return (
-            <div key={c.id} className={`bg-white rounded-[20px] border-2 p-4 transition-all ${sel?'border-slate-900 shadow-lg scale-[1.02]':'border-slate-100'}`}>
+            <div key={c.id} className={`bg-white rounded-[20px] border-2 p-4 transition-all relative overflow-hidden ${jaVoteiNele?'border-emerald-500 shadow-lg': sel?'border-slate-900 shadow-lg scale-[1.02]':'border-slate-100'}`}>
+              {jaVoteiNele && <div className="absolute top-0 right-0 bg-emerald-500 text-white text-[9px] font-black px-3 py-1 rounded-bl-xl">SEU VOTO</div>}
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                   <Avatar id={c.id} nome={c.nome} cor={c.cor} size={56}/>
@@ -184,7 +214,10 @@ export default function Page() {
                 <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden"><div className="h-full transition-all duration-500" style={{width:`${pct}%`, background:c.cor}}/></div>
                 <div className="flex justify-between text-[10px] mt-1 text-slate-500"><span>{v} votos</span><span>{pct}%</span></div>
               </div>
-              <button onClick={()=>handleVotar(c.id)} className="w-full mt-3 py-2.5 rounded-full bg-slate-900 text-white text-xs font-bold hover:bg-black flex items-center justify-center gap-2"><Award className="w-4 h-4"/> VOTAR • {c.numero}</button>
+              <div className="grid grid-cols-2 gap-2 mt-3">
+                <button onClick={()=>handleVotar(c.id)} disabled={!!meuVoto} className={`py-2.5 rounded-full text-xs font-bold flex items-center justify-center gap-1 ${meuVoto ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-slate-900 text-white hover:bg-black'}`}><Award className="w-4 h-4"/> {meuVoto? 'Já votou' : `VOTAR • ${c.numero}`}</button>
+                <button onClick={()=>handleShare(c)} className="py-2.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold flex items-center justify-center gap-1"><Share2 className="w-4 h-4"/> WhatsApp</button>
+              </div>
             </div>
           )
         })}
@@ -212,7 +245,6 @@ export default function Page() {
                     <h3 className="font-bold mt-2">{c.nome}</h3>
                     <p className="text-xs text-slate-500">{c.partido} • {v} votos • {total?((v/total)*100).toFixed(1):0}%</p>
                     <div className="mt-4 space-y-2 text-left">{c.propostas.map((p,i)=><div key={i} className="bg-slate-50 p-2 rounded-xl text-xs">• {p}</div>)}</div>
-                    <button onClick={()=>handleVotar(c.id)} className="w-full mt-4 py-2 rounded-full bg-slate-900 text-white text-xs font-bold">VOTAR NESSE</button>
                   </div>
                 )
               })}
@@ -221,7 +253,7 @@ export default function Page() {
         </div>
       )}
 
-      {toast && <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl z-50 animate-bounce max-w-[90%] text-center">{toast}</div>}
+      {toast && <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-sm font-bold shadow-2xl z-50 max-w-[90%] text-center">{toast}</div>}
     </div>
   )
 }
