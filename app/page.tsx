@@ -3,28 +3,27 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Scale, Award, X, Trophy, CheckCircle } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
-// FOTOS QUE NÃO QUEBRAM - usando CDN com proxy
+// FOTOS REAIS - WIKIPEDIA COM URL DIRETA (SEM THUMB QUE QUEBRA)
 const fotos: Record<string, string> = {
-  "13-lula": "https://images.unsplash.com/photo-1580136579312-94651dfd596d?w=200&h=200&fit=crop&crop=face",
-  "22-bolsonaro": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face",
-  "12-ciro": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face",
-  "15-tebet": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face",
-  "45-tarcisio": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200&h=200&fit=crop&crop=face",
-  "45-leite": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=200&h=200&fit=crop&crop=face",
-  "10-marina": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=200&h=200&fit=crop&crop=face",
-  "40-tabata": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=200&h=200&fit=crop&crop=face",
-  "PL-nikolas": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",
-  "50-erika": "https://images.unsplash.com/photo-1489424731084-a5d8b219a5bb?w=200&h=200&fit=crop&crop=face",
-  "65-doria": "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&h=200&fit=crop&crop=face",
+  "13-lula": "https://upload.wikimedia.org/wikipedia/commons/7/7c/Lula_%C3%A9_eleitopresidentedobrasil.jpg",
+  "22-bolsonaro": "https://upload.wikimedia.org/wikipedia/commons/0/05/Jair_Bolsonaro_%28cropped%29.jpg",
+  "12-ciro": "https://upload.wikimedia.org/wikipedia/commons/7/70/Ciro_Gomes_2022.jpg",
+  "15-tebet": "https://upload.wikimedia.org/wikipedia/commons/1/14/Simone_Tebet%2C_Senadora_%28cropped%29.jpg",
+  "10-marina": "https://upload.wikimedia.org/wikipedia/commons/a/a0/Marina_Silva_2022.jpg",
+  "40-tabata": "https://upload.wikimedia.org/wikipedia/commons/d/db/Tabata_Amaral_2019.jpg",
+  "PL-nikolas": "https://upload.wikimedia.org/wikipedia/commons/3/30/Nikolas_Ferreira_2023.jpg",
+  "50-erika": "https://upload.wikimedia.org/wikipedia/commons/5/5e/Erika_Hilton_2023.jpg",
+  "65-doria": "https://upload.wikimedia.org/wikipedia/commons/b/b2/Jo%C3%A3o_Doria_2020.jpg",
+  "45-leite": "https://upload.wikimedia.org/wikipedia/commons/8/8a/Eduardo_Leite_2022.jpg",
 }
 
 function Avatar({ id, nome, cor, size=56 }: {id:string, nome:string, cor:string, size?:number}) {
   const [erro, setErro] = useState(false)
   const inicial = nome.split(' ').map(n=>n[0]).slice(0,2).join('')
   if (erro) {
-    return <div style={{width:size, height:size, background:cor, border:`3px solid ${cor}`}} className="rounded-full flex items-center justify-center text-white font-bold text-sm">{inicial}</div>
+    return <div style={{width:size, height:size, background:cor, border:`3px solid ${cor}`}} className="rounded-full flex items-center justify-center text-white font-bold text-[12px]">{inicial}</div>
   }
-  return <img src={fotos[id] || `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=${cor.replace('#','')}&color=fff&size=128`} onError={()=>setErro(true)} style={{width:size, height:size, border:`3px solid ${cor}`}} className="rounded-full object-cover" alt={nome}/>
+  return <img src={fotos[id] || `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=${cor.replace('#','')}&color=fff&size=256`} onError={()=>setErro(true)} style={{width:size, height:size, border:`3px solid ${cor}`}} className="rounded-full object-cover bg-slate-100" alt={nome} referrerPolicy="no-referrer"/>
 }
 
 const candidatosData = [
@@ -64,7 +63,7 @@ export default function Page() {
         data.forEach(r => { cont[r.candidato_id] = (cont[r.candidato_id] || 0) + 1 })
         setVotos(cont)
       }
-      const channel = supabase.channel('v3-realtime-fix')
+      const channel = supabase.channel('v3-realtime-real')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votos' }, (payload:any) => {
           const id = payload.new.candidato_id
           setVotos(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
