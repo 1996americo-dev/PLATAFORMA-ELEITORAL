@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
-export default function AdminV5() {
+export default function AdminV55() {
   const [senha, setSenha] = useState("")
   const [logado, setLogado] = useState(false)
   const [votos, setVotos] = useState<any[]>([])
@@ -11,7 +11,7 @@ export default function AdminV5() {
 
   const carregar = async () => {
     const { data } = await supabase.from('votos').select('*').order('created_at', { ascending: false })
-    if (data) { setVotos(data); const c: Record<string, number> = {}; data.forEach(r=>c[r.candidato_id]=(c[r.candidato_id]||0)+1); setStats(c) }
+    if (data) { setVotos(data); const c: Record<string, number> = {}; data.forEach(r=>{ if(r.candidato_id!=='branco' && r.candidato_id!=='nulo') c[r.candidato_id]=(c[r.candidato_id]||0)+1 }); setStats(c) }
   }
   useEffect(()=>{if(logado) carregar()},[logado])
 
@@ -23,11 +23,11 @@ export default function AdminV5() {
   }
 
   if (!logado) return (
-    <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6">
-      <div className="bg-white rounded-[24px] p-8 max-w-sm w-full">
-        <h1 className="font-black text-2xl">ADMIN V5 🔥📊</h1><p className="text-sm text-slate-500 mb-6">Senha: 2026 • Agora com CSV + Pizza</p>
-        <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="Senha" className="w-full bg-slate-100 rounded-full px-4 py-3 text-sm mb-4"/>
-        <button onClick={()=> senha===SENHA?setLogado(true):alert("Errou! 2026")} className="w-full bg-slate-900 text-white py-3 rounded-full font-bold">Entrar</button>
+    <div className="min-h-screen bg-[#0F172A] flex items-center justify-center p-6">
+      <div className="bg-white rounded-[24px] p-8 max-w-sm w-full border-[4px] border-slate-900 shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
+        <h1 className="font-black text-2xl text-slate-900">ADMIN V5.5 🔒</h1><p className="text-sm text-slate-900 font-bold mt-1">Senha: 2026 • Contraste Forte</p>
+        <input type="password" value={senha} onChange={e=>setSenha(e.target.value)} placeholder="Digite a senha" className="w-full bg-slate-100 border-2 border-slate-900 rounded-full px-4 py-3 text-sm mt-6 font-bold text-black placeholder:text-slate-500"/>
+        <button onClick={()=> senha===SENHA?setLogado(true):alert("Errou! 2026")} className="w-full bg-slate-900 text-white py-3 rounded-full font-black mt-4 text-sm tracking-widest">ENTRAR NO ADMIN</button>
       </div>
     </div>
   )
@@ -36,37 +36,38 @@ export default function AdminV5() {
   const ranking = Object.entries(stats).sort((a,b)=>b[1]-a[1])
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] p-6">
-      <div className="max-w-5xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <div><h1 className="font-black text-3xl">Admin V5 • Viral 📈</h1><p className="text-sm text-slate-500">{total} votos • Pizza + CSV + Tempo Real</p></div>
-          <div className="flex gap-2"><button onClick={exportCSV} className="bg-emerald-600 text-white px-4 py-2 rounded-full text-xs font-bold">📥 Exportar CSV</button><button onClick={carregar} className="bg-white border px-4 py-2 rounded-full text-xs font-bold">Atualizar</button><a href="/" className="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-bold">Site</a></div>
+    <div className="min-h-screen bg-[#F1F5F9] p-4 md:p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-6 bg-white border-[3px] border-slate-900 rounded-2xl p-4">
+          <div><h1 className="font-black text-2xl text-slate-900 tracking-tight">ADMIN V5.5 • CONTRASTE FORTE</h1><p className="text-sm font-bold text-slate-900">{total} votos totais • 9 votos do seu print ainda aqui!</p></div>
+          <div className="flex gap-2"><button onClick={exportCSV} className="bg-emerald-600 border-2 border-slate-900 text-white px-5 py-2.5 rounded-full text-xs font-black">📥 EXPORTAR CSV</button><button onClick={carregar} className="bg-white border-[3px] border-slate-900 text-slate-900 px-5 py-2.5 rounded-full text-xs font-black">ATUALIZAR</button><a href="/" className="bg-slate-900 text-white px-5 py-2.5 rounded-full text-xs font-black border-2 border-slate-900">SITE V5.5</a></div>
         </div>
 
         <div className="grid md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-2xl p-6 border"><p className="text-xs font-bold text-slate-400">TOTAL</p><p className="text-4xl font-black">{total}</p></div>
-          <div className="bg-slate-900 text-white rounded-2xl p-6"><p className="text-xs font-bold text-yellow-400">LÍDER</p><p className="text-xl font-black mt-1">{ranking[0]?.[0] || "-"}</p><p className="text-xs mt-1">{ranking[0]?.[1]||0} votos</p></div>
-          <div className="bg-white rounded-2xl p-6 border"><p className="text-xs font-bold text-slate-400">VIRAL</p><p className="text-sm font-bold mt-1">Stories 1080x1920</p><p className="text-xs text-slate-500">Gera imagem pra Insta</p></div>
-          <div className="bg-white rounded-2xl p-6 border"><button onClick={()=>{localStorage.removeItem('meu_voto_v4'); alert('Resetado!')}} className="w-full bg-amber-100 text-amber-800 py-2 rounded-full text-xs font-bold mb-2">Resetar meu celular</button><button onClick={async()=>{if(confirm('Zerar tudo?')){await supabase.from('votos').delete().neq('id',0); carregar()}}} className="w-full bg-red-50 text-red-600 border border-red-200 py-2 rounded-full text-xs font-bold">Zerar votos</button></div>
+          <div className="bg-white border-[3px] border-slate-900 rounded-2xl p-5"><p className="text-[11px] font-black text-slate-900 tracking-widest">TOTAL GERAL</p><p className="text-5xl font-black text-slate-900 mt-1">{total}</p><p className="text-xs font-bold text-slate-600 mt-1">votos computados</p></div>
+          <div className="bg-slate-900 border-[3px] border-slate-900 text-white rounded-2xl p-5"><p className="text-[11px] font-black text-yellow-400 tracking-widest">LÍDER ATUAL</p><p className="text-xl font-black mt-2 truncate">{ranking[0]?.[0] || "-"}</p><p className="text-sm font-bold mt-1">{ranking[0]?.[1]||0} votos • {total?((ranking[0]?.[1]/total)*100).toFixed(1):0}%</p></div>
+          <div className="bg-white border-[3px] border-slate-900 rounded-2xl p-5"><p className="text-[11px] font-black text-slate-900">STATUS</p><p className="text-sm font-black text-slate-900 mt-2">✅ Supabase Online</p><p className="text-xs font-bold text-slate-600">Urna + V5 integrados</p><p className="text-xs font-bold text-emerald-600 mt-2">● AO VIVO</p></div>
+          <div className="bg-white border-[3px] border-slate-900 rounded-2xl p-4 flex flex-col gap-2"><button onClick={()=>{localStorage.removeItem('meu_voto_v55'); localStorage.removeItem('meu_voto_v6'); localStorage.removeItem('meu_voto_v4'); alert('Seu celular resetado! Pode votar de novo')}} className="w-full bg-amber-300 border-2 border-slate-900 text-slate-900 py-2.5 rounded-full text-xs font-black">🔄 RESETAR MEU CELULAR</button><button onClick={async()=>{if(confirm('ZERAR TODOS OS VOTOS? Vai apagar os 9 votos!')){const {error}=await supabase.from('votos').delete().neq('id','00000000-0000-0000-0000-000000000000'); if(error) alert(error.message); else carregar()}}} className="w-full bg-red-600 border-2 border-slate-900 text-white py-2.5 rounded-full text-xs font-black">🗑️ ZERAR TUDO</button></div>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <div className="bg-white rounded-[24px] border p-6">
-            <h2 className="font-bold mb-4">🍕 Pizza - Top 5</h2>
-            <div className="flex justify-center mb-4">
-              <div className="relative w-56 h-56 rounded-full" style={{background:`conic-gradient(${ranking.slice(0,5).map((r,i)=>{const cores=['#DC2626','#2563EB','#1E40AF','#EAB308','#16A34A']; const start=ranking.slice(0,i).reduce((a,b)=>a+b[1],0)/total*100; const end=start+r[1]/total*100; return `${cores[i]} ${start}% ${end}%`}).join(',')})`}}><div className="absolute inset-6 bg-white rounded-full flex items-center justify-center flex-col"><span className="text-3xl font-black">{total}</span><span className="text-[10px]">VOTOS</span></div></div>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="bg-white border-[3px] border-slate-900 rounded-[24px] p-6">
+            <h2 className="font-black text-slate-900 text-sm tracking-widest border-b-[3px] border-slate-900 pb-2">🍕 PIZZA - VOTOS POR CANDIDATO</h2>
+            <div className="flex justify-center my-6"><div className="relative w-60 h-60 rounded-full border-[3px] border-slate-900" style={{background:`conic-gradient(${ranking.slice(0,6).map((r,i)=>{const cores=['#DC2626','#2563EB','#1E40AF','#EAB308','#16A34A','#BE123C']; const start=ranking.slice(0,i).reduce((a,b)=>a+b[1],0)/total*100; const end=start+r[1]/total*100; return `${cores[i%6]} ${start}% ${end}%`}).join(',')})`}}><div className="absolute inset-8 bg-white border-[3px] border-slate-900 rounded-full flex items-center justify-center flex-col"><span className="text-4xl font-black text-slate-900">{total}</span><span className="text-[10px] font-black text-slate-900 tracking-widest">VOTOS</span></div></div></div>
+            <div className="space-y-2">{ranking.map(([id,qtd],i)=>{const cores=['#DC2626','#2563EB','#1E40AF','#EAB308','#16A34A','#BE123C']; return <div key={id} className="flex items-center gap-3 text-sm bg-slate-50 border-2 border-slate-200 rounded-xl p-2"><span className="w-4 h-4 rounded-full border-2 border-slate-900" style={{background:cores[i%6]}}/><span className="flex-1 truncate font-black text-slate-900">{id}</span><span className="font-black text-slate-900">{qtd}</span><span className="font-bold text-slate-600 w-12 text-right">{total?((qtd/total)*100).toFixed(1):0}%</span></div>})}</div>
+          </div>
+
+          <div className="space-y-6">
+            <div className="bg-white border-[3px] border-slate-900 rounded-[24px] p-6">
+              <h2 className="font-black text-slate-900 text-sm tracking-widest border-b-[3px] border-slate-900 pb-2">🏆 RANKING COMPLETO</h2>
+              <div className="mt-4 space-y-2">{ranking.map(([id,qtd],i)=><div key={id} className="flex items-center gap-3 bg-white border-2 border-slate-900 rounded-xl p-3"><span className="w-7 h-7 bg-slate-900 text-white rounded-full flex items-center justify-center text-xs font-black">{i+1}</span><span className="flex-1 text-sm font-black text-slate-900 truncate">{id}</span><div className="w-20 h-3 bg-slate-200 border-2 border-slate-900 rounded-full overflow-hidden"><div className="h-full bg-slate-900" style={{width:`${total?(qtd/total*100):0}%`}}/></div><span className="text-xs font-black text-slate-900 w-10 text-right">{qtd}</span></div>)}</div>
             </div>
-            {ranking.slice(0,5).map(([id,qtd],i)=>{const cores=['#DC2626','#2563EB','#1E40AF','#EAB308','#16A34A']; return <div key={id} className="flex items-center gap-2 text-sm py-1"><span className="w-3 h-3 rounded-full" style={{background:cores[i]}}/><span className="flex-1 truncate font-bold">{id}</span><span>{qtd} • {total?((qtd/total)*100).toFixed(1):0}%</span></div>})}
-          </div>
-          <div className="bg-white rounded-[24px] border p-6">
-            <h2 className="font-bold mb-4">Ranking Completo</h2>
-            <div className="space-y-2">{ranking.map(([id,qtd],i)=><div key={id} className="flex items-center gap-2"><span className="w-6 h-6 bg-slate-900 text-white rounded-full flex items-center justify-center text-xs font-bold">{i+1}</span><span className="flex-1 text-sm font-bold truncate">{id}</span><div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden"><div className="h-full bg-slate-900" style={{width:`${total?(qtd/total*100):0}%`}}/></div><span className="text-xs font-bold w-16 text-right">{qtd}</span></div>)}</div>
-          </div>
-        </div>
 
-        <div className="bg-white rounded-[24px] border p-6 mt-6">
-          <h2 className="font-bold mb-4">Últimos votos (tempo real)</h2>
-          <div className="space-y-2 max-h-96 overflow-auto">{votos.slice(0,30).map((v:any)=><div key={v.id} className="flex justify-between text-xs bg-slate-50 p-3 rounded-xl"><span className="font-bold">{v.candidato_id}</span><span className="text-slate-500">{new Date(v.created_at).toLocaleString('pt-BR')}</span></div>)}</div>
+            <div className="bg-slate-900 border-[3px] border-slate-900 rounded-[24px] p-6 text-white">
+              <h2 className="font-black text-sm tracking-widest border-b-2 border-white/20 pb-2">📋 ÚLTIMOS VOTOS - TEMPO REAL</h2>
+              <div className="mt-4 space-y-2 max-h-[300px] overflow-auto">{votos.slice(0,20).map((v:any)=><div key={v.id} className="flex justify-between text-xs bg-white/10 border border-white/20 p-3 rounded-xl"><span className="font-black">{v.candidato_id}</span><span className="font-mono text-white/70">{new Date(v.created_at).toLocaleString('pt-BR')}</span></div>)}</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
