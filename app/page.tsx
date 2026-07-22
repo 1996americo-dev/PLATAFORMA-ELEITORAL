@@ -6,29 +6,28 @@ import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 const SUPABASE_URL = "https://xvhtuacgagthzvusybsg.supabase.co"
 const BUCKET = "fotos-candidatos"
 
-// MAPEAMENTO DAS SUAS FOTOS REAIS - PODE USAR .webp, .jpg, .png
+// CORRIGIDO COM NOMES EXATOS DO SEU BUCKET (print 2)
 const fotosReais: Record<string, string> = {
-  "13-lula": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/lula.webp`,
+  "13-lula": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/lula.jpg`,
   "22-bolsonaro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/bolsonaro.webp`,
-  "PL-nikolas": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/nikolas.webp`,
-  "12-ciro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/ciro.webp`,
-  "15-tebet": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tebet.webp`,
-  "10-marina": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/marina.webp`,
-  "40-tabata": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tabata.webp`,
-  "50-erika": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/erika.webp`,
-  "65-doria": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/doria.webp`,
-  "45-leite": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/leite.webp`,
+  "PL-nikolas": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/nicolas.jpg`,
+  "12-ciro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/ciro.png`,
+  "15-tebet": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tebete.jpg`,
+  "10-marina": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/marina.jpg`,
+  "40-tabata": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tabata.jpg`,
+  "50-erika": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/erika.jpg`,
+  "65-doria": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/doria.jpg`,
+  "45-leite": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/leite.jpg`,
 }
 
 function Avatar({ id, nome, cor, size=56 }: {id:string, nome:string, cor:string, size?:number}) {
   const [erro, setErro] = useState(false)
   const iniciais = nome.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()
   const url = fotosReais[id]
-
-  if (erro || !url) {
-    return <div style={{width:size, height:size, background:cor, fontSize:size*0.35}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 border-2 shadow-sm" title={nome}>{iniciais}</div>
+  if (erro) {
+    return <div style={{width:size, height:size, background:cor, fontSize:size*0.32}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 border-2">{iniciais}</div>
   }
-  return <img src={url} onError={()=>setErro(true)} style={{width:size, height:size, border:`3px solid ${cor}`}} className="rounded-full object-cover shrink-0 shadow-sm bg-slate-100" alt={nome} />
+  return <img src={url} onError={()=>setErro(true)} style={{width:size, height:size, border:`3px solid ${cor}`}} className="rounded-full object-cover shrink-0 bg-white" alt={nome} />
 }
 
 const candidatosData = [
@@ -68,7 +67,7 @@ export default function Page() {
         data.forEach(r => { cont[r.candidato_id] = (cont[r.candidato_id] || 0) + 1 })
         setVotos(cont)
       }
-      const channel = supabase.channel('v3-fotos-reais')
+      const channel = supabase.channel('v3-fotos-corrigido')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votos' }, (payload:any) => {
           const id = payload.new.candidato_id
           setVotos(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
