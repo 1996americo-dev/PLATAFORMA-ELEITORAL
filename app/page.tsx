@@ -3,13 +3,32 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Scale, Award, X, Trophy, CheckCircle } from 'lucide-react';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase'
 
-function Avatar({ nome, cor, size=56, partido }: {nome:string, cor:string, size?:number, partido:string}) {
+const SUPABASE_URL = "https://xvhtuacgagthzvusybsg.supabase.co"
+const BUCKET = "fotos-candidatos"
+
+// MAPEAMENTO DAS SUAS FOTOS REAIS - PODE USAR .webp, .jpg, .png
+const fotosReais: Record<string, string> = {
+  "13-lula": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/lula.webp`,
+  "22-bolsonaro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/bolsonaro.webp`,
+  "PL-nikolas": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/nikolas.webp`,
+  "12-ciro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/ciro.webp`,
+  "15-tebet": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tebet.webp`,
+  "10-marina": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/marina.webp`,
+  "40-tabata": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tabata.webp`,
+  "50-erika": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/erika.webp`,
+  "65-doria": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/doria.webp`,
+  "45-leite": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/leite.webp`,
+}
+
+function Avatar({ id, nome, cor, size=56 }: {id:string, nome:string, cor:string, size?:number}) {
+  const [erro, setErro] = useState(false)
   const iniciais = nome.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase()
-  return (
-    <div style={{width:size, height:size, background:cor, border:`3px solid ${cor}`, fontSize:size*0.35}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 shadow-sm">
-      {iniciais}
-    </div>
-  )
+  const url = fotosReais[id]
+
+  if (erro || !url) {
+    return <div style={{width:size, height:size, background:cor, fontSize:size*0.35}} className="rounded-full flex items-center justify-center text-white font-black shrink-0 border-2 shadow-sm" title={nome}>{iniciais}</div>
+  }
+  return <img src={url} onError={()=>setErro(true)} style={{width:size, height:size, border:`3px solid ${cor}`}} className="rounded-full object-cover shrink-0 shadow-sm bg-slate-100" alt={nome} />
 }
 
 const candidatosData = [
@@ -49,7 +68,7 @@ export default function Page() {
         data.forEach(r => { cont[r.candidato_id] = (cont[r.candidato_id] || 0) + 1 })
         setVotos(cont)
       }
-      const channel = supabase.channel('v3-final-avatares')
+      const channel = supabase.channel('v3-fotos-reais')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'votos' }, (payload:any) => {
           const id = payload.new.candidato_id
           setVotos(prev => ({ ...prev, [id]: (prev[id] || 0) + 1 }))
@@ -91,7 +110,7 @@ export default function Page() {
             <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-bold">26</div>
             <div>
               <h1 className="font-black tracking-tight leading-none">PLATAFORMA ELEITORAL 2026</h1>
-              <p className="text-[10px] tracking-[0.2em] text-slate-500 font-bold">OFICIAL • COMPARATIVO • VOTAÇÃO SIMULADA</p>
+              <p className="text-[10px] tracking-[0.2em] text-slate-500 font-bold">FOTOS REAIS • RANKING GLOBAL • VOTAÇÃO SIMULADA</p>
             </div>
           </div>
           <div className="relative">
@@ -118,7 +137,7 @@ export default function Page() {
                 <div key={c.id} className={`rounded-2xl p-4 ${i===0?'bg-slate-900 text-white':'bg-slate-50 border'}`}>
                   <div className="flex items-center gap-2 mb-2">
                     <span className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i===0?'bg-white text-slate-900':'bg-slate-900 text-white'}`}>{i+1}</span>
-                    <Avatar nome={c.nome} cor={c.cor} size={28} partido={c.partido}/>
+                    <Avatar id={c.id} nome={c.nome} cor={c.cor} size={28}/>
                     <span className="font-bold text-sm truncate">{c.nome.split(' ')[0]}</span>
                   </div>
                   <div className="h-2 bg-black/10 rounded-full overflow-hidden"><div className="h-full bg-yellow-400" style={{width:`${pct}%`}}/></div>
@@ -145,7 +164,7 @@ export default function Page() {
             <div key={c.id} className={`bg-white rounded-[20px] border-2 p-4 transition-all ${sel?'border-slate-900 shadow-lg scale-[1.02]':'border-slate-100'}`}>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <Avatar nome={c.nome} cor={c.cor} size={56} partido={c.partido}/>
+                  <Avatar id={c.id} nome={c.nome} cor={c.cor} size={56}/>
                   <div>
                     <h3 className="font-bold text-sm leading-tight">{c.nome}</h3>
                     <p className="text-xs text-slate-500">{c.numero} • {c.partido}</p>
@@ -182,7 +201,7 @@ export default function Page() {
                 const v = votos[c.id]||0
                 return (
                   <div key={id} className="border rounded-2xl p-4 text-center">
-                    <div className="flex justify-center"><Avatar nome={c.nome} cor={c.cor} size={80} partido={c.partido}/></div>
+                    <div className="flex justify-center"><Avatar id={c.id} nome={c.nome} cor={c.cor} size={80}/></div>
                     <h3 className="font-bold mt-2">{c.nome}</h3>
                     <p className="text-xs text-slate-500">{c.partido} • {v} votos • {total?((v/total)*100).toFixed(1):0}%</p>
                     <div className="mt-4 space-y-2 text-left">{c.propostas.map((p,i)=><div key={i} className="bg-slate-50 p-2 rounded-xl text-xs">• {p}</div>)}</div>
