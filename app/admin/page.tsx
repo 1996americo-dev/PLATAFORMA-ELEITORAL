@@ -39,7 +39,7 @@ export default function Admin(){
             )})}
           </div>
           <div style={{background:'white', border:'4px solid black', borderRadius:16, padding:14, boxShadow:'0 6px 0 black'}}>
-            <div style={{fontWeight:900, color:'black'}}>{c?.nome||id} - {c?.partido} {c?.numero}</div>
+            <div style={{fontWeight:900, color:'black'}}>{c?.nome||id} - {c?.partido} {c?.numero}
             <div style={{marginTop:10, display:'grid', gap:6, maxHeight:600, overflow:'auto'}}>
               {votos.map((v:any,i)=><div key={v.id} style={{border:'2px solid #E2E8F0', borderRadius:8, padding:8, fontSize:11}}><div style={{fontWeight:800}}>{i+1}. {v.candidato_id.slice(0,8)}... → {cands.find(c=>c.id===v.candidato_id)?.nome}</div><div style={{fontSize:10, opacity:0.7}}>{new Date(v.created_at).toLocaleString()} • HASH:{v.cpf_hash?.slice(0,8)}</div></div>)}
             </div>
