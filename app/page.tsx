@@ -1,4 +1,3 @@
-
 "use client"
 import { useState, useEffect } from 'react'
 import { createClient } from '@supabase/supabase-js'
@@ -11,12 +10,11 @@ const supabase = createClient(
 function validaCPF(c:string){c=c.replace(/\D/g,'');if(c.length!==11||/^(\d)\1{10}$/.test(c))return false;let s=0;for(let i=0;i<9;i++)s+=parseInt(c[i])*(10-i);let r=s%11;let d1=r<2?0:11-r;if(parseInt(c[9])!==d1)return false;s=0;for(let i=0;i<10;i++)s+=parseInt(c[i])*(11-i);r=s%11;let d2=r<2?0:11-r;return parseInt(c[10])===d2}
 async function hashCPF(c:string){const e=new TextEncoder().encode(c.replace(/\D/g,''));const b=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
 
-// EDITE AQUI SUAS FOTOS - troque o link
 const CANDS=[
   {id:'13-lula', nome:'CANDIDATO 13', partido:'PT', num:'13', cor:'#CC0000', foto:'https://i.imgur.com/8Km9tLL.png'},
   {id:'22-bolsonaro', nome:'CANDIDATO 22', partido:'PL', num:'22', cor:'#0B3D91', foto:'https://i.imgur.com/k2tG1aH.png'},
-  {id:'PL-nikolas', nome:'CANDIDATO PL', partido:'PL', num:'22', cor:'#0B3D91', foto:''},
-  {id:'12-ciro', nome:'CANDIDATO 12', partido:'PDT', num:'12', cor:'#FFC500', foto:''},
+  {id:'PL-nikolas', nome:'CANDIDATO PL', partido:'PL', num:'22', cor:'#0B3D91', foto:'https://i.imgur.com/JqYeZ1n.png'},
+  {id:'12-ciro', nome:'CANDIDATO 12', partido:'PDT', num:'12', cor:'#FFC500', foto:'https://i.imgur.com/Xy1aBfA.png'},
   {id:'15-mdb', nome:'CANDIDATA 15', partido:'MDB', num:'15', cor:'#009739', foto:''},
   {id:'30-novo', nome:'CANDIDATO 30', partido:'NOVO', num:'30', cor:'#FF6600', foto:''},
 ]
