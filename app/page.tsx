@@ -1,151 +1,86 @@
+
 "use client"
-import { useState, useMemo } from "react"
-import { Search, Check, X, ShieldCheck, Users, ArrowUpRight } from "lucide-react"
+import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-type Party = "PDT" | "PT" | "MDB" | "REDE" | "PL" | "PSB" | "PSDB" | "PSOL"
-type Candidate = { id: string; name: string; number: string; party: Party; color: string; bg: string; initials: string; role: string; state: string }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-const partyColors: Record<Party, { main: string; light: string; border: string; text: string }> = {
-  PDT: { main: "#1250A3", light: "#E6EEFF", border: "#1250A3", text: "#1250A3" },
-  PT: { main: "#C41E1E", light: "#FDE8E8", border: "#C41E1E", text: "#9E1212" },
-  MDB: { main: "#D4A500", light: "#FFF8DB", border: "#C79A00", text: "#7A5A00" },
-  REDE: { main: "#2EB872", light: "#E6F9EF", border: "#2EB872", text: "#14633B" },
-  PL: { main: "#155232", light: "#E5F3EB", border: "#155232", text: "#0F3D25" },
-  PSB: { main: "#E86A17", light: "#FFF0E6", border: "#E86A17", text: "#9A3F00" },
-  PSDB: { main: "#3B82F6", light: "#EAF2FF", border: "#3B82F6", text: "#1D4ED8" },
-  PSOL: { main: "#7C3AED", light: "#F0E9FF", border: "#7C3AED", text: "#5B21B6" },
-}
+function validaCPF(c:string){c=c.replace(/\D/g,'');if(c.length!==11||/^(\d)\1{10}$/.test(c))return false;let s=0;for(let i=0;i<9;i++)s+=parseInt(c[i])*(10-i);let r=s%11;let d1=r<2?0:11-r;if(parseInt(c[9])!==d1)return false;s=0;for(let i=0;i<10;i++)s+=parseInt(c[i])*(11-i);r=s%11;let d2=r<2?0:11-r;return parseInt(c[10])===d2}
+async function hashCPF(c:string){const e=new TextEncoder().encode(c.replace(/\D/g,''));const b=await crypto.subtle.digest('SHA-256',e);return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('')}
 
-const candidates: Candidate[] = [
-  { id: "ciro", name: "Ciro Gomes", number: "12", party: "PDT", initials: "CG", role: "Candidato à Presidência", state: "CE", color: "#1250A3", bg: "#E6EEFF" },
-  { id: "lula", name: "Lula", number: "13", party: "PT", initials: "LS", role: "Candidato à Presidência", state: "SP", color: "#C41E1E", bg: "#FDE8E8" },
-  { id: "simone", name: "Simone Tebet", number: "15", party: "MDB", initials: "ST", role: "Candidata à Presidência", state: "MS", color: "#D4A500", bg: "#FFF8DB" },
-  { id: "marina", name: "Marina Silva", number: "18", party: "REDE", initials: "MS", role: "Candidata à Presidência", state: "SP", color: "#2EB872", bg: "#E6F9EF" },
-  { id: "bolsonaro", name: "Bolsonaro", number: "22", party: "PL", initials: "JB", role: "Candidato à Presidência", state: "RJ", color: "#155232", bg: "#E5F3EB" },
-  { id: "nikolas", name: "Nikolas Ferreira", number: "2222", party: "PL", initials: "NF", role: "Candidato", state: "MG", color: "#155232", bg: "#E5F3EB" },
-  { id: "tabata", name: "Tabata Amaral", number: "40", party: "PSB", initials: "TA", role: "Candidata", state: "SP", color: "#E86A17", bg: "#FFF0E6" },
-  { id: "doria", name: "João Doria", number: "45", party: "PSDB", initials: "JD", role: "Candidato", state: "SP", color: "#3B82F6", bg: "#EAF2FF" },
-  { id: "eduardo", name: "Eduardo Leite", number: "45", party: "PSDB", initials: "EL", role: "Candidato", state: "RS", color: "#3B82F6", bg: "#EAF2FF" },
-  { id: "erika", name: "Erika Hilton", number: "50", party: "PSOL", initials: "EH", role: "Candidata", state: "SP", color: "#7C3AED", bg: "#F0E9FF" },
+const CANDS=[
+  {id:'13-lula', nome:'LULA', partido:'PT', num:'13', cor:'#CC0000'},
+  {id:'22-bolsonaro', nome:'BOLSONARO', partido:'PL', num:'22', cor:'#0B3D91'},
+  {id:'PL-nikolas', nome:'NIKOLAS FERREIRA', partido:'PL', num:'22', cor:'#0B3D91'},
+  {id:'12-ciro', nome:'CIRO GOMES', partido:'PDT', num:'12', cor:'#FFC500'},
+  {id:'15-mdb', nome:'SIMONE TEBET', partido:'MDB', num:'15', cor:'#009739'},
+  {id:'30-novo', nome:'NOVO', partido:'NOVO', num:'30', cor:'#FF6600'},
 ]
 
-export default function Page() {
-  const [search, setSearch] = useState("")
-  const [comparing, setComparing] = useState<string[]>([])
-  const [selected, setSelected] = useState<Candidate | null>(null)
-
-  const filtered = useMemo(() => {
-    if (!search) return candidates
-    return candidates.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.party.toLowerCase().includes(search.toLowerCase()) || c.number.includes(search))
-  }, [search])
-
-  const toggleCompare = (id: string) => {
-    setComparing(prev => prev.includes(id) ? prev.filter(x => x!== id) : prev.length < 3 ? [...prev, id] : prev)
+export default function PageV57(){
+  const [cpf,setCpf]=useState("");const[ok,setOk]=useState(false);const[hash,setHash]=useState("");const[votos,setVotos]=useState<any[]>([]);const[stats,setStats]=useState<Record<string,number>>({});const[sel,setSel]=useState("");const[loading,setLoading]=useState(false)
+  const load=async()=>{const {data}=await supabase.from('votos').select('*').order('created_at',{ascending:false});if(data){setVotos(data);const m:Record<string,number>={};data.forEach((r:any)=>{if(!['branco','nulo'].includes(r.candidato_id)) m[r.candidato_id]=(m[r.candidato_id]||0)+1});setStats(m)}}
+  useEffect(()=>{load()},[])
+  const validar=async()=>{
+    const l=cpf.replace(/\D/g,'');if(!validaCPF(l)){alert("CPF inválido! Teste: 529.982.247-25");return}
+    setLoading(true)
+    const h=await hashCPF(l)
+    const {data}=await supabase.from('votos').select('id').eq('cpf_hash',h).maybeSingle()
+    if(data){alert("ESTE CPF JÁ VOTOU! 1 CPF = 1 VOTO");setLoading(false);return}
+    setHash(h);setOk(true);setLoading(false)
   }
-
-  return (
-    <div className="min-h-screen bg-white text-[#0F2147] antialiased selection:bg-[#0F2147] selection:text-white">
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap'); *{font-family:'Inter',sans-serif}`}</style>
-      
-      <header className="sticky top-0 z-40 backdrop-blur-xl bg-white/80 border-b border-black/[0.06]">
-        <div className="mx-auto max-w-[1280px] px-6 md:px-8 h-[72px] flex items-center justify-between">
-          <div className="flex items-center gap-5">
-            <div className="flex flex-col leading-[0.9]">
-              <span className="text-[15px] font-extrabold tracking-[0.14em]">PLATAFORMA ELEITORAL</span>
-              <span className="text-[15px] font-extrabold tracking-[0.14em]">2026</span>
-              <div className="mt-1 h-[3px] w-[84px] bg-[#0F2147] rounded-full" />
-            </div>
-            <div className="hidden md:flex items-center gap-2.5 pl-5 border-l border-black/10">
-              <div className="h-7 px-2.5 rounded-full bg-[#E6F9EF] border border-[#2EB872]/20 flex items-center gap-1.5">
-                <div className="w-4 h-4 rounded-full bg-[#2EB872] flex items-center justify-center"><Check className="w-2.5 h-2.5 text-white stroke-[3]" /></div>
-                <span className="text-[10px] font-bold tracking-widest text-[#14633B]">OFICIAL</span>
-              </div>
-            </div>
-          </div>
-          <div className="hidden md:flex items-center gap-2 text-[12px] text-black/50"><ShieldCheck className="w-4 h-4" /> Ambiente seguro</div>
+  const votar=async()=>{
+    if(!sel){alert("Escolha um candidato!");return}
+    const {error}=await supabase.from('votos').insert({candidato_id:sel,cpf_hash:hash})
+    if(error){alert("ERRO: "+error.message);return}
+    alert("VOTO COMPUTADO!");setCpf("");setOk(false);setSel("");setHash("");load()
+  }
+  const total=votos.length
+  const rank=Object.entries(stats).sort((a:any,b:any)=>b[1]-a[1])
+  return(
+    <div style={{minHeight:'100vh', background:'#020617', color:'white', padding:12}}>
+      <div style={{maxWidth:1220, margin:'0 auto'}}>
+        <div style={{background:'#FFFFFF', border:'4px solid black', borderRadius:16, padding:'10px 14px', display:'flex', justifyContent:'space-between', alignItems:'center', boxShadow:'0 6px 0 black'}}>
+          <div style={{color:'black', fontWeight:900, fontSize:12}}>PLATAFORMA 2026 • SIMULADOR EDUCATIVO • 1 CPF = 1 VOTO • HASH SEGURO • V5.7 PROFISSIONAL</div>
+          <a href="/admin" style={{background:'black', color:'white', padding:'7px 16px', borderRadius:999, fontWeight:900, fontSize:12, textDecoration:'none', border:'2px solid black'}}>ADMIN</a>
         </div>
-      </header>
-
-      <section className="relative overflow-hidden">
-        <div className="pointer-events-none absolute -top-[40%] left-[20%] w-[80%] h-[80%] rounded-full blur-[120px] bg-gradient-to-b from-[#E6EEFF] to-transparent opacity-60" />
-        <div className="mx-auto max-w-[1280px] px-6 md:px-8 py-12 md:py-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-black/10 bg-white px-3 py-1 text-[11px] font-medium text-black/50"><div className="w-1.5 h-1.5 rounded-full bg-[#2EB872] animate-pulse" />Eleições 2026 • Dados TSE</div>
-              <h1 className="mt-4 text-[40px] md:text-[56px] font-extrabold tracking-tight leading-[0.95]">Conheça os<br />Candidatos</h1>
-              <p className="mt-3 text-[15px] md:text-[16px] text-black/50 max-w-[420px] leading-[1.5]">Plataforma transparente para comparação de propostas e votação consciente. Design oficial gov.br premium.</p>
+        <div style={{background:'#FBBF24', border:'3px solid black', color:'black', borderRadius:12, padding:'8px', textAlign:'center', fontWeight:900, fontSize:11, marginTop:10, boxShadow:'0 4px 0 black'}}>⚠️ SIMULADOR EDUCATIVO - NÃO É VOTAÇÃO OFICIAL DO TSE - HASH SHA-256 - LGPD OK</div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 360px', gap:14, marginTop:14}}>
+          <div style={{background:'#FFFFFF', border:'4px solid black', borderRadius:20, padding:16, boxShadow:'0 8px 0 black'}}>
+            <div style={{color:'black', fontWeight:900, fontSize:16, borderBottom:'4px solid black', paddingBottom:8, display:'flex', justifyContent:'space-between'}}>
+              <span>🏆 RANKING - {total} VOTOS CPF VALIDADOS</span>
+              <span style={{fontSize:11, background:'black', color:'white', padding:'4px 10px', borderRadius:999}}>{total} TOTAL</span>
             </div>
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
-                <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Buscar nome, partido, número..." className="h-11 w-full md:w-[320px] rounded-full border border-black/10 bg-white pl-10 pr-4 text-[13px] outline-none focus:border-[#0F2147]/30 focus:ring-4 focus:ring-[#0F2147]/5" />
-              </div>
-            </div>
-          </div>
-
-          {comparing.length > 0 && (
-            <div className="mt-6 rounded-[14px] border border-[#0F2147]/10 bg-[#F6F7F9] px-4 py-3 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-[13px] font-medium"><Users className="w-4 h-4" />{comparing.length} selecionados para comparação</div>
-              <button onClick={()=>setComparing([])} className="text-[13px] font-semibold hover:underline">Limpar</button>
-            </div>
-          )}
-
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map(c => {
-              const isComparing = comparing.includes(c.id)
-              return (
-                <div key={c.id} className="group relative rounded-[20px] border border-black/[0.06] bg-white p-6 shadow-[0_4px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_12px_32px_rgba(0,0,0,0.08)] hover:-translate-y-0.5 transition-all">
-                  <div className="flex gap-4">
-                    <div className="w-[64px] h-[64px] rounded-full p-[3px] shrink-0" style={{ background: c.color }}>
-                      <div className="w-full h-full rounded-full bg-white flex items-center justify-center"><span className="text-[20px] font-bold" style={{ color: c.color }}>{c.initials}</span></div>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <h3 className="text-[16px] font-bold leading-tight truncate">{c.name}</h3>
-                      <p className="text-[12px] text-black/50 mt-0.5">{c.role} • {c.state}</p>
-                      <div className="mt-2 inline-flex h-6 px-2.5 rounded-full text-[11px] font-bold border" style={{ background: partyColors[c.party].light, borderColor: partyColors[c.party].border+"22", color: partyColors[c.party].text }}>{c.number} - {c.party}</div>
-                    </div>
-                  </div>
-                  <div className="mt-5 flex gap-2">
-                    <button onClick={()=>setSelected(c)} className="flex-1 h-9 rounded-full bg-[#0F2147] text-white text-[13px] font-semibold hover:bg-[#152C5E]">Ver Propostas</button>
-                    <button onClick={()=>toggleCompare(c.id)} className={`flex-1 h-9 rounded-full border text-[13px] font-semibold transition ${isComparing ? "bg-[#0F2147] text-white border-[#0F2147]" : "border-black/10 hover:bg-black/[0.03]"}`}>{isComparing ? "Remover" : "Comparar"}</button>
-                  </div>
-                  <div className="absolute top-5 right-5 opacity-0 group-hover:opacity-100 transition-opacity"><div className="w-6 h-6 rounded-full bg-black/[0.04] flex items-center justify-center"><ArrowUpRight className="w-3.5 h-3.5 text-black/30" /></div></div>
+            <div style={{marginTop:12, display:'grid', gap:10}}>
+              {rank.length===0 && <div style={{textAlign:'center', padding:30, background:'#F1F5F9', border:'3px dashed black', borderRadius:14, color:'black', fontWeight:800}}>Nenhum voto ainda.</div>}
+              {rank.map(([id,qtd]:any,i)=>
+                <div key={id} style={{background:i===0?'#020617':'#FFFFFF', color:i===0?'white':'black', border:'3px solid black', borderRadius:14, padding:12, display:'flex', alignItems:'center', gap:12, boxShadow:'0 4px 0 black'}}>
+                  <div style={{background:i===0?'#FBBF24':'black', color:i===0?'black':'white', minWidth:36, height:36, borderRadius:999, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900}}>{i+1}</div>
+                  <div style={{flex:1, fontWeight:900, fontSize:13}}>{(CANDS.find(c=>c.id===id)?.nome || id).toUpperCase()} - {qtd} votos</div>
+                  <div style={{fontWeight:900}}>{total?((qtd/total)*100).toFixed(1):0}%</div>
                 </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      <footer className="bg-[#0A1931] text-white mt-4">
-        <div className="mx-auto max-w-[1280px] px-6 md:px-8 py-10 flex flex-col md:flex-row justify-between gap-4">
-          <p className="text-[13px] font-semibold">Eleições 2026 - Dados oficiais TSE</p>
-          <p className="text-[11px] text-white/40">© 2026 Plataforma Eleitoral • Transparência • LGPD</p>
-        </div>
-      </footer>
-
-      {selected && (
-        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-0 md:p-6">
-          <div className="absolute inset-0 bg-[#0F2147]/40 backdrop-blur-[6px]" onClick={()=>setSelected(null)} />
-          <div className="relative w-full md:max-w-[560px] bg-white rounded-t-[24px] md:rounded-[20px] shadow-[0_24px_80px_rgba(0,0,0,0.25)] overflow-hidden max-h-[88vh] flex flex-col">
-            <div className="h-1 w-full" style={{ background: selected.color }} />
-            <div className="p-8 overflow-y-auto">
-              <button onClick={()=>setSelected(null)} className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/5 flex items-center justify-center"><X className="w-4 h-4" /></button>
-              <h2 className="text-[22px] font-bold">{selected.name}</h2>
-              <p className="text-[13px] text-black/60 mt-2">Protótipo - propostas oficiais serão vinculadas ao DivulgaCand TSE após homologação.</p>
-              <div className="mt-6 space-y-3">
-                {["Economia e Emprego","Educação e Tecnologia","Saúde e SUS"].map(t=>(
-                  <div key={t} className="rounded-[14px] bg-[#F6F7F9] border border-black/[0.04] p-4">
-                    <h4 className="text-[13px] font-bold">{t}</h4>
-                    <p className="mt-1 text-[13px] text-black/60 leading-[1.5]">Proposta focada em resultados práticos e transparência.</p>
-                  </div>
-                ))}
-              </div>
-              <button onClick={()=>setSelected(null)} className="mt-6 w-full h-11 rounded-full bg-[#0F2147] text-white text-[13px] font-semibold">Fechar</button>
+              )}
+            </div>
+            <div style={{marginTop:20, color:'black', fontWeight:900, fontSize:14, borderTop:'4px solid black', paddingTop:10}}>🗳️ CANDIDATOS - VALIDE CPF PARA VOTAR</div>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginTop:10}}>
+              {CANDS.map(c=>
+                <button key={c.id} onClick={()=>ok&&setSel(c.id)} disabled={!ok} style={{border:`${sel===c.id?'5px':'4px'} solid black`, borderRadius:16, padding:12, background:sel===c.id?'#020617':'#FFFFFF', color:sel===c.id?'white':'black', fontWeight:900, textAlign:'left', cursor:ok?'pointer':'not-allowed', opacity:ok?1:0.55, boxShadow:'0 5px 0 black', display:'flex', justifyContent:'space-between'}}>
+                  <span><span style={{background:c.cor, color:'white', padding:'4px 8px', borderRadius:999, marginRight:6, border:'2px solid black'}}>{c.num}</span>{c.nome}</span>
+                  <span style={{fontSize:9, background:'#F1F5F9', color:'black', padding:'4px 8px', borderRadius:999, border:'2px solid black'}}>{c.partido}</span>
+                </button>
+              )}
             </div>
           </div>
+          <div style={{background:'#FFFFFF', border:'4px solid black', borderRadius:20, padding:16, boxShadow:'0 8px 0 black', height:'fit-content'}}>
+            <div style={{color:'black', fontWeight:900, fontSize:13}}>🔒 VALIDAÇÃO CPF ANTI-FRAUDE</div>
+            <input value={cpf} onChange={e=>{let v=e.target.value.replace(/\D/g,'');if(v.length<=11){v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2');setCpf(v)}}} placeholder="000.000.000-00" style={{width:'100%', border:'4px solid black', borderRadius:999, padding:14, textAlign:'center', fontWeight:900, fontSize:22, marginTop:12, color:'black', background:'#F1F5F9'}}/>
+            {!ok?<button onClick={validar} style={{width:'100%', background:'black', color:'white', border:'3px solid black', borderRadius:999, padding:12, fontWeight:900, marginTop:10, boxShadow:'0 4px 0 black'}}>{loading?'VALIDANDO...':'VALIDAR CPF → LIBERAR URNA'}</button>:<><div style={{background:'#DCFCE7', border:'3px solid black', borderRadius:12, padding:10, marginTop:10, color:'black', fontWeight:900, fontSize:11, textAlign:'center'}}>✅ VALIDADO HASH: {hash.slice(0,12)}</div><button onClick={votar} style={{width:'100%', background:'#16A34A', color:'white', border:'4px solid black', borderRadius:999, padding:14, fontWeight:900, marginTop:10, boxShadow:'0 5px 0 black'}}>CONFIRMAR VOTO: {sel||'ESCOLHA'}</button></>}
+          </div>
         </div>
-      )}
+      </div>
     </div>
   )
 }
