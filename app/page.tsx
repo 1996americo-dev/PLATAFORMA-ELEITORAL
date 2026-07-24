@@ -1,156 +1,113 @@
 "use client"
-import { useState, useEffect, useMemo } from 'react'
-import { supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { useState, useEffect } from 'react'
+import { createClient } from '@supabase/supabase-js'
 
-const SUPABASE_URL = "https://xvhtuacgagthzvusybsg.supabase.co"
-const BUCKET = "fotos-candidatos"
-const fotosReais: Record<string, string> = {
-  "13-lula": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/lula.jpg`,
-  "22-bolsonaro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/bolsonaro.webp`,
-  "PL-nikolas": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/nicolas.jpg`,
-  "12-ciro": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/ciro.png`,
-  "15-tebet": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tebete.jpg`,
-  "10-marina": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/marina.jpg`,
-  "40-tabata": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/tabata.jpg`,
-  "50-erika": `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/erika.jpg`,
-}
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-const candidatosData = [
-  { id: "13-lula", nome: "Luiz Inácio Lula", partido: "PT", numero: "13", cor: "#DC2626" },
-  { id: "22-bolsonaro", nome: "Jair Bolsonaro", partido: "PL", numero: "22", cor: "#2563EB" },
-  { id: "PL-nikolas", nome: "Nikolas Ferreira", partido: "PL", numero: "77", cor: "#1E40AF" },
-  { id: "12-ciro", nome: "Ciro Gomes", partido: "PDT", numero: "12", cor: "#EAB308" },
-  { id: "15-tebet", nome: "Simone Tebet", partido: "MDB", numero: "15", cor: "#16A34A" },
-  { id: "40-tabata", nome: "Tabata Amaral", partido: "PSB", numero: "40", cor: "#CA8A04" },
-  { id: "50-erika", nome: "Erika Hilton", partido: "PSOL", numero: "50", cor: "#BE123C" },
-]
-
-function Avatar({ id, nome, cor, size=48 }: any){
-  const [erro,setErro]=useState(false)
-  const url=fotosReais[id]
-  if(erro) return <div style={{width:size,height:size,background:cor}} className="rounded-full flex items-center justify-center text-white font-black text-[10px] border-2">{nome.slice(0,2).toUpperCase()}</div>
-  return <img src={url} onError={()=>setErro(true)} style={{width:size,height:size,border:`3px solid ${cor}`}} className="rounded-full object-cover bg-white" alt={nome}/>
-}
-
-// valida CPF de verdade (cálculo oficial receita)
 function validaCPF(cpf: string){
   cpf = cpf.replace(/\D/g,'')
   if(cpf.length!==11 || /^(\d)\1{10}$/.test(cpf)) return false
-  let soma=0; for(let i=0;i<9;i++) soma+=parseInt(cpf[i])*(10-i); let resto=(soma*10)%11; if(resto===10||resto===11) resto=0; if(resto!==parseInt(cpf[9])) return false
-  soma=0; for(let i=0;i<10;i++) soma+=parseInt(cpf[i])*(11-i); resto=(soma*10)%11; if(resto===10||resto===11) resto=0; return resto===parseInt(cpf[10])
+  let s=0; for(let i=0;i<9;i++) s+= parseInt(cpf[i])*(10-i); let r=s%11; let d1=r<2?0:11-r
+  if(parseInt(cpf[9])!==d1) return false
+  s=0; for(let i=0;i<10;i++) s+= parseInt(cpf[i])*(11-i); r=s%11; let d2=r<2?0:11-r
+  return parseInt(cpf[10])===d2
 }
-
-async function hashCPF(cpf: string){
-  const enc = new TextEncoder().encode(cpf.replace(/\D/g,''))
-  const buf = await crypto.subtle.digest('SHA-256', enc)
+async function hashCPF(cpf:string){
+  const enc=new TextEncoder().encode(cpf.replace(/\D/g,''))
+  const buf=await crypto.subtle.digest('SHA-256',enc)
   return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('')
 }
 
-export default function V56(){
-  const [cpf, setCpf] = useState("")
-  const [cpfValido, setCpfValido] = useState(false)
-  const [numero, setNumero] = useState("")
-  const [votos, setVotos] = useState<Record<string,number>>({})
-  const [meuVoto, setMeuVoto] = useState<string|null>(null)
-  const [toast, setToast] = useState<string|null>(null)
-  const [confete, setConfete] = useState(false)
-  const [etapa, setEtapa] = useState<'cpf'|'urna'>('cpf')
+const CANDS=[
+  {id:'13-lula', nome:'LULA', num:'13', partido:'PT', cor:'#CC0000'},
+  {id:'22-bolsonaro', nome:'JAIR BOLSONARO', num:'22', partido:'PL', cor:'#0047AB'},
+  {id:'PL-nikolas', nome:'NIKOLAS FERREIRA', num:'22', partido:'PL', cor:'#0047AB'},
+  {id:'12-ciro', nome:'CIRO GOMES', num:'12', partido:'PDT', cor:'#FFD700'},
+  {id:'15-mdb', nome:'MDB', num:'15', partido:'MDB', cor:'#00A859'},
+]
 
-  useEffect(()=>{ const s=localStorage.getItem('cpf_hash_v56'); if(s) setMeuVoto("ja_votou") },[])
+export default function SiteV57(){
+  const [cpf,setCpf]=useState(""); const [cpfOk,setCpfOk]=useState(false); const [cpfHash,setCpfHash]=useState("")
+  const [votos,setVotos]=useState<any[]>([]); const [stats,setStats]=useState<Record<string,number>>({})
+  const [selecionado,setSelecionado]=useState("")
+  const [msg,setMsg]=useState("")
 
-  const carregar = async () => {
-    if(!isSupabaseConfigured) return
-    const { data } = await supabase.from('votos').select('candidato_id')
-    if(data){ const c:Record<string,number>={}; data.forEach(r=>{ if(!['branco','nulo'].includes(r.candidato_id)) c[r.candidato_id]=(c[r.candidato_id]||0)+1}); setVotos(c) }
+  const carregar=async()=>{
+    const {data}=await supabase.from('votos').select('*')
+    if(data){ setVotos(data); const c:Record<string,number>={}; data.forEach((r:any)=>{ if(!['branco','nulo'].includes(r.candidato_id)) c[r.candidato_id]=(c[r.candidato_id]||0)+1 }); setStats(c) }
   }
-  useEffect(()=>{ carregar(); if(isSupabaseConfigured){ const ch=supabase.channel('v56').on('postgres_changes',{event:'INSERT',schema:'public',table:'votos'},carregar).subscribe(); return()=>{supabase.removeChannel(ch)} } },[])
+  useEffect(()=>{carregar()},[])
 
-  const candidatoAtual = useMemo(()=> candidatosData.find(c=>c.numero===numero),[numero])
-  const total = Object.values(votos).reduce((a,b)=>a+b,0)
-  const ranking = [...candidatosData].sort((a,b)=>(votos[b.id]||0)-(votos[a.id]||0))
-
-  const verificarCPF = async () => {
-    const limpo = cpf.replace(/\D/g,'')
-    if(!validaCPF(limpo)){ setToast("❌ CPF inválido! Digite um CPF real (11 números)"); setTimeout(()=>setToast(null),3000); return }
-    const h = await hashCPF(limpo)
-    // verifica se já votou (busca hash no supabase)
-    if(isSupabaseConfigured){
-      const { data } = await supabase.from('votos').select('id').eq('cpf_hash', h).limit(1)
-      if(data && data.length>0){ setToast("🚫 Este CPF já votou! 1 CPF = 1 voto (anti-fraude)"); setTimeout(()=>setToast(null),4000); return }
-    } else {
-      const ja = localStorage.getItem('cpf_hash_v56')
-      if(ja===h){ setToast("🚫 Este CPF já votou neste dispositivo!"); setTimeout(()=>setToast(null),3000); return }
-    }
-    setCpfValido(true); setEtapa('urna'); setToast("✅ CPF válido! Agora vote na urna"); setTimeout(()=>setToast(null),2000)
+  const validar=async()=>{
+    const limpo=cpf.replace(/\D/g,'')
+    if(!validaCPF(limpo)){ alert("CPF inválido! Use 529.982.247-25 para teste"); return }
+    const h=await hashCPF(limpo)
+    const {data}=await supabase.from('votos').select('id').eq('cpf_hash',h).maybeSingle()
+    if(data){ alert("ESSE CPF JÁ VOTOU! 1 CPF = 1 VOTO"); return }
+    setCpfHash(h); setCpfOk(true); setMsg("CPF validado! Hash: "+h.slice(0,8)+"... Agora escolha seu candidato")
   }
 
-  const digitar = (n:string)=>{ if(numero.length<2) setNumero(numero+n) }
-  const confirma = async () => {
-    if(!cpfValido){ setToast("Confirme o CPF primeiro!"); return }
-    if(numero==='' ){ setToast("Digite o número!"); setTimeout(()=>setToast(null),2000); return }
-    if(!candidatoAtual){ if(!confirm(`Número ${numero} não existe. Confirmar NULO?`)) return }
-    const id = candidatoAtual?.id || 'nulo'
-    const h = await hashCPF(cpf)
-    if(isSupabaseConfigured){
-      const { error } = await supabase.from('votos').insert({ candidato_id: id, cpf_hash: h })
-      if(error){ if(error.message.includes('duplicate')||error.code==='23505'){ setToast("🚫 Este CPF já votou! Anti-fraude ativado"); } else setToast(error.message); setTimeout(()=>setToast(null),4000); return }
-    }
-    localStorage.setItem('cpf_hash_v56', h); setVotos(prev=>({...prev,[id]:(prev[id]||0)+1})); setMeuVoto(id); setConfete(true); setToast(`✅ Voto com CPF ${cpf.slice(0,3)}.***.***-${cpf.slice(-2)} confirmado! Anti-fraude OK`); setTimeout(()=>{setConfete(false); setToast(null)},4000)
+  const votar=async()=>{
+    if(!selecionado){ alert("Escolha um candidato"); return }
+    const {error}=await supabase.from('votos').insert({candidato_id:selecionado, cpf_hash:cpfHash})
+    if(error){ alert("ERRO: "+error.message); return }
+    alert("VOTO COMPUTADO COM SUCESSO! 🔒"); setCpf(""); setCpfOk(false); setSelecionado(""); setCpfHash(""); carregar()
   }
+
+  const total=votos.length
+  const ranking=Object.entries(stats).sort((a:any,b:any)=>b[1]-a[1])
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans">
-      {confete && <div className="fixed inset-0 pointer-events-none z-[100] text-3xl flex flex-wrap justify-center pt-20">{"✅🔒🗳️🇧🇷".repeat(100).split('').map((e,i)=><span key={i} className="animate-bounce" style={{animationDelay:`${i*0.03}s`}}>{e}</span>)}</div>}
-      <header className="sticky top-0 z-50 bg-white border-b-2 border-slate-900">
-        <div className="max-w-[1400px] mx-auto px-6 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-3"><div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center text-white font-black">26</div><div><h1 className="font-black text-sm leading-none tracking-tight">PLATAFORMA 2026 • V5.6 ANTI-FRAUDE CPF</h1><p className="text-[10px] font-black tracking-widest text-slate-600">SIMULADOR EDUCATIVO • 1 CPF = 1 VOTO • HASH SEGURO • /ADMIN</p></div></div>
-          <a href="/admin" className="bg-slate-900 text-white px-4 py-2 rounded-full text-xs font-black">ADMIN</a>
+    <div style={{minHeight:'100vh', background:'#0B1220', color:'white', fontFamily:'Inter, Arial'}}>
+      <div style={{maxWidth:1200, margin:'0 auto', padding:12}}>
+        <div style={{background:'white', color:'black', border:'4px solid black', borderRadius:16, padding:10, display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+          <div><span style={{background:'black', color:'white', padding:'4px 10px', borderRadius:999, fontWeight:900}}>26</span><span style={{fontWeight:900, marginLeft:8, fontSize:12}}>SIMULADOR EDUCATIVO • 1 CPF = 1 VOTO • HASH SEGURO • V5.7 FINAL</span></div>
+          <a href="/admin" style={{background:'black', color:'white', padding:'8px 16px', borderRadius:999, fontWeight:900, fontSize:12, textDecoration:'none'}}>ADMIN</a>
         </div>
-      </header>
 
-      <div className="bg-amber-200 border-b-2 border-slate-900 text-[11px] font-black text-center py-2 tracking-widest">⚠️ SIMULADOR EDUCATIVO - NÃO É ELEIÇÃO OFICIAL DO TSE - DADOS CRIPTOGRAFADOS COM HASH - LGPD OK</div>
+        <div style={{background:'#FBBF24', color:'black', border:'3px solid black', borderRadius:12, padding:8, textAlign:'center', fontWeight:900, fontSize:11, marginTop:10}}>⚠️ SIMULADOR EDUCATIVO - NÃO É VOTAÇÃO OFICIAL DO TSE - DADOS CRIPTOGRAFADOS COM HASH - LGPD OK</div>
 
-      <div className="max-w-[1400px] mx-auto px-6 mt-6 grid lg:grid-cols-3 gap-6">
-        {/* ESQUERDA - RANKING */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white border-[3px] border-slate-900 rounded-[24px] p-5">
-            <h2 className="font-black text-sm">🏆 Ranking • {total} votos validados por CPF</h2>
-            <div className="grid grid-cols-2 gap-3 mt-3">{ranking.slice(0,4).map((c,i)=>{const v=votos[c.id]||0; const pct=total?(v/total*100).toFixed(1):"0"; return <div key={c.id} className={`rounded-2xl p-3 border-2 ${i===0?'bg-slate-900 text-white border-slate-900':'bg-slate-50 border-slate-200'}`}><div className="flex items-center gap-2"><span className="w-5 h-5 bg-white text-slate-900 rounded-full flex items-center justify-center text-[10px] font-black">{i+1}</span><Avatar id={c.id} nome={c.nome} cor={c.cor} size={24}/><span className="font-bold text-xs truncate">{c.nome.split(' ')[0]}</span></div><div className="h-2 bg-black/20 rounded-full overflow-hidden mt-2"><div className="h-full bg-yellow-400" style={{width:`${pct}%`}}/></div><div className="flex justify-between mt-1 text-[10px] font-bold"><span>{v} votos CPF</span><span>{pct}%</span></div></div>})}</div>
+        <div style={{display:'grid', gridTemplateColumns:'1fr 340px', gap:12, marginTop:12}}>
+          <div style={{background:'white', color:'black', border:'4px solid black', borderRadius:20, padding:14}}>
+            <h2 style={{fontWeight:900, margin:0, fontSize:16, color:'black', borderBottom:'3px solid black', paddingBottom:6}}>🏆 RANKING OFICIAL - {total} VOTOS CPF</h2>
+            <div style={{marginTop:12, display:'grid', gap:8}}>
+              {ranking.length===0 && <p style={{fontWeight:700, textAlign:'center', padding:20}}>Nenhum voto ainda. Seja o primeiro!</p>}
+              {ranking.map(([id,qtd]:any,i)=>
+                <div key={id} style={{display:'flex', alignItems:'center', gap:10, border:'3px solid black', borderRadius:14, padding:8, background:i===0?'#0B1220':'white', color:i===0?'white':'black'}}>
+                  <span style={{background:i===0?'#FBBF24':'black', color:i===0?'black':'white', width:32, height:32, borderRadius:999, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900}}>{i+1}</span>
+                  <div style={{width:48, height:48, borderRadius:999, background:'#E2E8F0', border:'2px solid black', display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, color:'black'}}>{CANDS.find(c=>c.id===id)?.nome[0] || "?"}</div>
+                  <div style={{flex:1}}><p style={{fontWeight:900, margin:0, fontSize:13}}>{CANDS.find(c=>c.id===id)?.nome || id}</p><p style={{fontWeight:700, margin:0, fontSize:11, opacity:0.7}}>{CANDS.find(c=>c.id===id)?.partido} • {qtd} votos</p></div>
+                  <div style={{textAlign:'right'}}><p style={{fontWeight:900, margin:0, fontSize:14}}>{total?((qtd/total)*100).toFixed(1):0}%</p><div style={{width:80, height:8, background:'#E2E8F0', borderRadius:999, border:'1px solid black', overflow:'hidden'}}><div style={{height:'100%', width:`${total?(qtd/total*100):0}%`, background:i===0?'#FBBF24':'black'}}/></div></div>
+                </div>
+              )}
+            </div>
+
+            <h2 style={{fontWeight:900, marginTop:20, fontSize:14, color:'black', borderTop:'3px solid black', paddingTop:10}}>🗳️ CANDIDATOS - CLIQUE PARA VOTAR</h2>
+            <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:8, marginTop:10}}>
+              {CANDS.map(c=>
+                <button key={c.id} onClick={()=>cpfOk && setSelecionado(c.id)} disabled={!cpfOk} style={{textAlign:'left', border:`${selecionado===c.id?'4px':'3px'} solid ${selecionado===c.id?'#FBBF24':'black'}`, borderRadius:14, padding:10, background:selecionado===c.id?'#0B1220':'white', color:selecionado===c.id?'white':'black', opacity:cpfOk?1:0.5, cursor:cpfOk?'pointer':'not-allowed'}}>
+                  <div style={{display:'flex', gap:8, alignItems:'center'}}><div style={{background:c.cor, color:'white', width:36, height:36, borderRadius:999, display:'flex', alignItems:'center', justifyContent:'center', fontWeight:900, border:'2px solid black'}}>{c.num}</div><div><p style={{fontWeight:900, margin:0, fontSize:12}}>{c.nome}</p><p style={{fontWeight:700, margin:0, fontSize:10}}>{c.partido} - {c.num}</p></div></div>
+                </button>
+              )}
+            </div>
           </div>
-          <div className="grid md:grid-cols-2 gap-3">{candidatosData.map(c=>{const v=votos[c.id]||0; return <div key={c.id} className="bg-white border-2 border-slate-900 rounded-2xl p-3 flex gap-3 items-center"><Avatar id={c.id} nome={c.nome} cor={c.cor} size={40}/><div className="flex-1"><p className="font-black text-xs">{c.nome}</p><p className="text-[10px] font-bold">{c.numero} • {c.partido} • {v} votos validados</p></div></div>})}</div>
-        </div>
 
-        {/* DIREITA - CPF + URNA */}
-        <div className="space-y-4">
-          {etapa==='cpf' && (
-            <div className="bg-white border-[4px] border-slate-900 rounded-[24px] p-6 shadow-[0_15px_40px_rgba(0,0,0,0.2)]">
-              <h2 className="font-black text-sm tracking-widest">🔒 VERIFICAÇÃO ANTI-FRAUDE</h2>
-              <p className="text-[11px] font-bold text-slate-600 mt-1">Digite seu CPF para validar. 1 CPF = 1 voto. Seu CPF vira código secreto (HASH), não salvamos seu número.</p>
-              <input value={cpf} onChange={e=>{let v=e.target.value.replace(/\D/g,'').slice(0,11); let f=v; if(v.length>3) f=`${v.slice(0,3)}.${v.slice(3)}`; if(v.length>6) f=`${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6)}`; if(v.length>9) f=`${v.slice(0,3)}.${v.slice(3,6)}.${v.slice(6,9)}-${v.slice(9)}`; setCpf(f)}} placeholder="000.000.000-00" className="w-full bg-slate-100 border-[3px] border-slate-900 rounded-full px-5 py-4 mt-4 text-center text-xl font-black tracking-widest text-black placeholder:text-slate-400"/>
-              <button onClick={verificarCPF} className="w-full bg-slate-900 text-white py-4 rounded-full font-black mt-4 tracking-widest text-sm">VALIDAR CPF → LIBERAR URNA</button>
-              <p className="text-[9px] font-bold text-center text-slate-500 mt-3">✅ Validação Receita Federal • 🔐 Criptografia SHA-256 • 🚫 Anti-fraude eleitoral<br/>Use um CPF válido para teste: 52998224725</p>
+          <div style={{display:'flex', flexDirection:'column', gap:12}}>
+            <div style={{background:'white', color:'black', border:'4px solid black', borderRadius:20, padding:14}}>
+              <h3 style={{fontWeight:900, margin:0, fontSize:13, color:'black'}}>🔒 VALIDAÇÃO CPF ANTI-FRAUDE</h3>
+              <p style={{fontWeight:600, fontSize:11, margin:'6px 0', color:'#334155'}}>Digite seu CPF para validar. 1 CPF = 1 voto. Seu CPF vira código secreto (HASH), não salvamos seu número.</p>
+              <input value={cpf} onChange={e=>{let v=e.target.value.replace(/\D/g,''); if(v.length<=11){v=v.replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d)/,'$1.$2').replace(/(\d{3})(\d{1,2})$/,'$1-$2'); setCpf(v)}} } placeholder="000.000.000-00" style={{width:'100%', border:'3px solid black', borderRadius:999, padding:14, textAlign:'center', fontWeight:900, fontSize:18, marginTop:8, color:'black', background:'#F1F5F9'}}/>
+              {!cpfOk ? <button onClick={validar} style={{width:'100%', background:'#0B1220', color:'white', border:'3px solid black', borderRadius:999, padding:12, fontWeight:900, fontSize:12, marginTop:10}}>VALIDAR CPF → LIBERAR URNA</button>
+              : <div><p style={{background:'#DCFCE7', border:'2px solid black', borderRadius:12, padding:8, fontWeight:800, fontSize:11, textAlign:'center', marginTop:10}}>✅ {msg}</p><button onClick={votar} style={{width:'100%', background:'#16A34A', color:'white', border:'3px solid black', borderRadius:999, padding:14, fontWeight:900, fontSize:13, marginTop:10}}>CONFIRMAR VOTO EM {selecionado.toUpperCase() || "..."}</button><button onClick={()=>{setCpfOk(false); setCpf(""); setSelecionado("")}} style={{width:'100%', background:'white', color:'black', border:'2px solid black', borderRadius:999, padding:8, fontWeight:800, fontSize:11, marginTop:8}}>TROCAR CPF</button></div>}
+              <p style={{fontSize:9, fontWeight:700, marginTop:8, color:'#64748B'}}>Validação Receita Federal • Criptografia SHA-256 • Teste: 529.982.247-25</p>
             </div>
-          )}
-
-          {etapa==='urna' && (
-            <div className="bg-[#F3F4F6] border-[5px] border-slate-900 rounded-2xl p-3">
-              <div className="bg-white border-2 border-slate-900 p-3 mb-3 rounded-xl"><p className="text-[10px] font-black">CPF VALIDADO:</p><p className="font-mono font-black text-sm">{cpf} ✅</p><p className="text-[9px] text-emerald-600 font-bold">LIBERADO PARA VOTAR - ANTI-FRAUDE OK</p></div>
-              <div className="bg-[#E5E7EB] border-2 border-slate-800 p-3 min-h-[260px]">
-                <div className="flex justify-between text-[9px] border-b border-slate-400 pb-1"><span>PRESIDENTE</span><span>CPF OK</span></div>
-                <div className="mt-3"><p className="text-[10px]">Número:</p><div className="flex gap-2 mt-1"><div className="w-10 h-12 border-2 border-black bg-white flex items-center justify-center text-2xl font-black">{numero[0]||''}</div><div className="w-10 h-12 border-2 border-black bg-white flex items-center justify-center text-2xl font-black">{numero[1]||''}</div></div></div>
-                {candidatoAtual && <div className="mt-3 flex gap-2"><div className="flex-1"><p className="text-[10px] font-bold">{candidatoAtual.nome}</p><p className="text-[9px]">{candidatoAtual.partido}</p></div><img src={fotosReais[candidatoAtual.id]} className="w-14 h-18 object-cover border-2 border-black" alt=""/></div>}
-                {numero.length===2 && !candidatoAtual && <p className="mt-4 font-black text-sm">NÚMERO ERRADO - VOTO NULO</p>}
-                {numero==='' && <p className="mt-6 text-[10px] text-slate-500">Digite 13, 22, 77, 12...</p>}
-              </div>
-              <div className="bg-[#1F2937] p-3 rounded-xl mt-3">
-                <div className="grid grid-cols-3 gap-2">{[1,2,3,4,5,6,7,8,9].map(n=><button key={n} onClick={()=>digitar(String(n))} className="h-10 bg-black text-white rounded font-black">{n}</button>)}<div/><button onClick={()=>digitar('0')} className="h-10 bg-black text-white rounded font-black">0</button><div/></div>
-                <div className="grid grid-cols-3 gap-1.5 mt-3"><button onClick={()=>setNumero("")} className="h-9 bg-[#F97316] rounded text-[9px] font-black">CORRIGE</button><button onClick={()=>{setEtapa('cpf'); setNumero(""); setCpfValido(false)}} className="h-9 bg-white rounded text-[9px] font-black">VOLTAR CPF</button><button onClick={confirma} className="h-12 bg-[#16A34A] text-white rounded text-[9px] font-black">CONFIRMA</button></div>
-              </div>
-            </div>
-          )}
+            <div style={{background:'#0B1220', border:'3px solid #FBBF24', borderRadius:16, padding:12, color:'white'}}><p style={{fontWeight:900, fontSize:11, color:'#FBBF24', margin:0}}>ℹ️ COMO FUNCIONA?</p><ul style={{fontSize:11, fontWeight:600, margin:'8px 0 0 14px', lineHeight:'1.4'}}><li>Valida dígito do CPF</li><li>Transforma em HASH SHA-256</li><li>Bloqueia CPF repetido</li><li>Salva só HASH, não CPF</li></ul></div>
+          </div>
         </div>
       </div>
-      {toast && <div className="fixed top-20 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full text-xs font-black z-50 max-w-[90%] text-center border-2 border-white shadow-2xl">{toast}</div>}
     </div>
   )
 }
