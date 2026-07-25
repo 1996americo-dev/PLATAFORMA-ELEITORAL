@@ -1,74 +1,169 @@
 "use client"
-import React from "react"
-const PIX="62981796690"
-const NOME_PIX="AMERICO QUISPE QUISPE"
-const VALOR="R$ 97,00"
-const WHATSAPP="5562981796690"
-const CODIGOS=["GRAZI2026","ELEICAO2026","PLATAFORMA","LIBERADO","AMERICO2026"]
-export default function HomeV21FinalLimpo(){
-const [cands,setCands]=React.useState<any[]>([])
-const [votos,setVotos]=React.useState<any[]>([])
-const [cpf,setCpf]=React.useState("")
-const [cpfOk,setCpfOk]=React.useState(false)
-const [liberado,setLiberado]=React.useState(false)
-const [codigo,setCodigo]=React.useState("")
-const [isDono,setIsDono]=React.useState(false)
-React.useEffect(()=>{
-if(typeof window!=="undefined"){
-const p=new URLSearchParams(window.location.search)
-if(p.get("dono")==="americo"||localStorage.getItem("admin_logado")==="true") setIsDono(true)
-}
-if(localStorage.getItem("acesso_liberado_2026")==="true") setLiberado(true)
-const c=localStorage.getItem("cands")
-const v=localStorage.getItem("votos")
-if(c) setCands(JSON.parse(c))
-if(v) setVotos(JSON.parse(v))
-if(!c){
-const inicial=[
-{id:1,nome:"Bolsonaro",sigla:"PL - 22",foto:"https://i.pravatar.cc/150?img=1",cor:"#0f4c75"},
-{id:2,nome:"Ciro Gomes",sigla:"PDT - 12",foto:"https://i.pravatar.cc/150?img=2",cor:"#e63946"},
-{id:3,nome:"Eduardo Leite",sigla:"PSDB - 45",foto:"https://i.pravatar.cc/150?img=3",cor:"#457b9d"},
-{id:4,nome:"Erika Hilton",sigla:"PSOL - 50",foto:"https://i.pravatar.cc/150?img=4",cor:"#f4a261"},
-{id:5,nome:"Lula",sigla:"PT - 13",foto:"https://i.pravatar.cc/150?img=5",cor:"#c1121f"},
-{id:6,nome:"Simone Tebet",sigla:"MDB - 15",foto:"https://i.pravatar.cc/150?img=6",cor:"#2a9d8f"},
-{id:7,nome:"Marina Silva",sigla:"REDE - 18",foto:"https://i.pravatar.cc/150?img=7",cor:"#606c38"},
-{id:8,nome:"Nikolas Ferreira",sigla:"PL - 2222",foto:"https://i.pravatar.cc/150?img=8",cor:"#264653"},
-{id:9,nome:"Tabata Amaral",sigla:"PSB - 40",foto:"https://i.pravatar.cc/150?img=9",cor:"#e76f51"},
-{id:10,nome:"João Doria",sigla:"PSDB - 45",foto:"https://i.pravatar.cc/150?img=10",cor:"#6c757d"},
-{id:11,nome:"João Amoêdo",sigla:"NOVO - 30",foto:"https://i.pravatar.cc/150?img=11",cor:"#ff9f1c"},
+import { useState, useEffect } from "react"
+
+const CANDIDATOS_INICIAIS = [
+  { id: 1, nome: "Bolsonaro", partido: "PL - 22", votos: 0, foto: "https://i.pravatar.cc/100?img=1" },
+  { id: 2, nome: "Ciro Gomes", partido: "PDT - 12", votos: 0, foto: "https://i.pravatar.cc/100?img=2" },
+  { id: 3, nome: "Eduardo Leite", partido: "PSDB - 45", votos: 0, foto: "https://i.pravatar.cc/100?img=3" },
+  { id: 4, nome: "Erika Hilton", partido: "PSOL - 50", votos: 0, foto: "https://i.pravatar.cc/100?img=4" },
+  { id: 5, nome: "Lula", partido: "PT - 13", votos: 0, foto: "https://i.pravatar.cc/100?img=5" },
+  { id: 6, nome: "Simone Tebet", partido: "MDB - 15", votos: 0, foto: "https://i.pravatar.cc/100?img=6" },
+  { id: 7, nome: "Marina Silva", partido: "REDE - 18", votos: 0, foto: "https://i.pravatar.cc/100?img=7" },
+  { id: 8, nome: "Nikolas Ferreira", partido: "PL - 22", votos: 0, foto: "https://i.pravatar.cc/100?img=8" },
+  { id: 9, nome: "Tabata Amaral", partido: "PSB - 40", votos: 0, foto: "https://i.pravatar.cc/100?img=9" },
+  { id: 10, nome: "Romeu Zema", partido: "NOVO - 30", votos: 0, foto: "https://i.pravatar.cc/100?img=10" },
+  { id: 11, nome: "Ronaldo Caiado", partido: "UNIAO - 44", votos: 0, foto: "https://i.pravatar.cc/100?img=11" },
 ]
-setCands(inicial)
-localStorage.setItem("cands",JSON.stringify(inicial))
-}
-},[])
-function copiar(){navigator.clipboard.writeText(PIX); alert(`PIX COPIADO: ${PIX} - ${NOME_PIX}`)}
-function zap(){window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent(`Ola! Paguei ${VALOR} PIX ${PIX} (${NOME_PIX}) libera meu acesso`)}`,"_blank")}
-function liberar(){const cd=codigo.toUpperCase().trim(); if(CODIGOS.includes(cd)||/^LIBERADO-\d{4}$/.test(cd)){localStorage.setItem("acesso_liberado_2026","true"); setLiberado(true)} else alert("Codigo invalido")}
-function validaCpf(){const l=cpf.replace(/\D/g,""); if(l.length!==11) return alert("CPF 11 numeros"); if(votos.some((v:any)=>v.cpf===l)) return alert("CPF ja votou"); setCpfOk(true)}
-function votar(id:number){if(!cpfOk) return alert("Valide CPF"); const l=cpf.replace(/\D/g,""); const n=[...votos,{id:Date.now(),candidato_id:id,cpf:l}]; setVotos(n); localStorage.setItem("votos",JSON.stringify(n)); setCpf(""); setCpfOk(false); alert("VOTO COMPUTADO")}
-const ranking=cands.map((c:any)=>({...c,qtd:votos.filter((v:any)=>v.candidato_id===c.id).length})).filter((c:any)=>c.qtd>0).sort((a:any,b:any)=>b.qtd-a.qtd)
-if(!liberado) return(
-<div style={{minHeight:"100vh",background:"linear-gradient(135deg,#000,#1a1a2e)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"system-ui"}}>
-<div style={{background:"white",borderRadius:24,padding:30,maxWidth:440,width:"100%",border:"5px solid #facc15",textAlign:"center"}}>
-<div style={{fontSize:60}}>🗳️</div>
-<h1 style={{fontWeight:900,fontSize:26,margin:"10px 0"}}>PLATAFORMA ELEITORAL 2026</h1>
-<div style={{background:"#fef08a",border:"3px solid black",borderRadius:12,padding:12,fontWeight:800,fontSize:13}}>V21 - 11 Candidatos + Ranking + CPF + Excel</div>
-<div style={{marginTop:18,background:"#f8fafc",border:"3px dashed black",borderRadius:14,padding:18,textAlign:"left"}}>
-<div style={{fontWeight:900,fontSize:16}}>LIBERAR ACESSO: {VALOR}</div>
-<div style={{marginTop:12,display:"flex",gap:8}}><input value={PIX} readOnly style={{flex:1,padding:12,border:"3px solid black",borderRadius:10,fontWeight:900,textAlign:"center"}}/><button onClick={copiar} style={{background:"#facc15",border:"3px solid black",borderRadius:10,padding:"0 16px",fontWeight:900,cursor:"pointer"}}>COPIAR</button></div>
-<div style={{marginTop:10,fontSize:13,fontWeight:700,lineHeight:1.4}}>Nome: <b>{NOME_PIX}</b><br/>Chave PIX: Celular<br/>Banco: Qualquer banco</div>
-</div>
-<button onClick={zap} style={{width:"100%",marginTop:14,background:"#22c55e",color:"white",fontWeight:900,padding:14,borderRadius:12,border:"3px solid black",cursor:"pointer"}}>JA PAGUEI - ENVIAR COMPROVANTE</button>
-<div style={{marginTop:18,borderTop:"3px solid black",paddingTop:14}}><b>TEM CODIGO?</b><input value={codigo} onChange={e=>setCodigo(e.target.value)} placeholder="GRAZI2026" style={{width:"100%",marginTop:8,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/><button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",fontWeight:900,padding:12,borderRadius:10,cursor:"pointer"}}>LIBERAR ACESSO</button></div>
-</div>
-</div>
-)
-return(
-<div style={{minHeight:"100vh",background:"#f1f5f9",padding:16,fontFamily:"system-ui"}}>
-<div style={{background:"linear-gradient(90deg,#000,#1e293b)",color:"white",borderRadius:16,padding:"18px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",border:"4px solid black"}}>
-<div><div style={{color:"#facc15",fontWeight:900,fontSize:24,letterSpacing:-0.5}}>PLATAFORMA ELEITORAL 2026</div><div style={{fontSize:12,fontWeight:700,opacity:0.85,marginTop:2}}>V21 • {cands.length} CANDIDATOS • {votos.length} VOTOS</div></div>
-<div style={{display:"flex",gap:8}}><div style={{background:"#facc15",color:"black",fontWeight:900,padding:"6px 12px",borderRadius:20,fontSize:12,border:"2px solid black"}}>AO VIVO</div><a href="/admin" style={{background:"white",color:"black",fontWeight:900,padding:"8px 14px",borderRadius:8,border:"2px solid black",textDecoration:"none",fontSize:12}}>👩‍💼 ADMIN</a>{isDono && <a href="/admin/vendas" style={{background:"#22c55e",color:"white",fontWeight:900,padding:"8px 14px",borderRadius:8,border:"2px solid black",textDecoration:"none",fontSize:12}}>💰 VENDAS</a>}</div>
-</div>
-<div style={{display:"grid",gridTemplateColumns:"340px 1fr",gap:16,marginTop:16}}><div><div style={{background:"white",border:"4px solid black",borderRadius:14,padding:14}}><h3 style={{margin:0,fontWeight:900}}>🏆 RANKING - {votos.length} VOTOS - 100%</h3><div style={{marginTop:10,border:"3px dashed #000",borderRadius:10,padding:10,minHeight:80}}>{ranking.length===0?<div style={{textAlign:"center",fontWeight:800,padding:20,color:"#64748b"}}>Nenhum voto ainda</div>:ranking.map((c:any,i:number)=>{const perc=votos.length?((c.qtd/votos.length)*100).toFixed(1):"0"; return <div key={c.id} style={{display:"flex",justifyContent:"space-between",background:i===0?"#facc15":"#f1f5f9",border:"2px solid black",padding:"10px 12px",borderRadius:8,marginBottom:6,fontWeight:900,fontSize:13}}><span>{i===0?"👑":""}{i+1}º {c.nome}</span><span>{c.qtd} votos • {perc}%</span></div>})}</div></div><div style={{background:"white",border:"4px solid black",borderRadius:14,padding:14,marginTop:12}}><h3 style={{margin:0,fontWeight:900}}>🔒 VALIDACAO CPF</h3><input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",padding:12,border:`3px solid ${cpfOk?"#22c55e":"black"}`,borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box",marginTop:8}}/><button onClick={validaCpf} style={{width:"100%",marginTop:8,background:cpfOk?"#22c55e":"black",color:"white",fontWeight:900,padding:12,borderRadius:10,border:"none",cursor:"pointer"}}>{cpfOk?"VALIDADO ✅":"VALIDAR CPF"}</button></div></div><div style={{background:"white",border:"4px solid black",borderRadius:14,padding:14}}><div style={{display:"flex",justifyContent:"space-between"}}><h2 style={{margin:0,fontWeight:900}}>🗳️ CANDIDATOS</h2><div style={{background:"black",color:"white",padding:"4px 10px",borderRadius:20,fontSize:11,fontWeight:800}}>{cands.length} CANDIDATOS</div></div><div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(180px,1fr))",gap:12,marginTop:12}}>{cands.map((c:any)=>{const q=votos.filter((v:any)=>v.candidato_id===c.id).length; const perc=votos.length?((q/votos.length)*100).toFixed(0):0; return(<div key={c.id} style={{border:"3px solid black",borderRadius:14,padding:12,textAlign:"center"}}><img src={c.foto_url||c.foto} style={{width:70,height:70,borderRadius:"50%",border:"3px solid black"}}/><div style={{fontWeight:900,marginTop:8}}>{c.nome}</div><div style={{background:"#facc15",border:"2px solid black",borderRadius:20,padding:"2px 8px",display:"inline-block",fontWeight:800,fontSize:11,marginTop:4}}>{c.sigla}</div><div style={{marginTop:8,fontSize:12,fontWeight:800}}>{q} votos • {perc}%</div><div style={{background:"#e2e8f0",height:6,borderRadius:10,marginTop:6,overflow:"hidden"}}><div style={{height:"100%",width:`${perc}%`,background:c.cor}}/></div><button onClick={()=>votar(c.id)} style={{width:"100%",marginTop:10,background:cpfOk?"#16a34a":"#94a3b8",color:"white",fontWeight:900,padding:10,borderRadius:10,border:"2px solid black",cursor:cpfOk?"pointer":"not-allowed"}}>{cpfOk?"VOTAR ✅":"VALIDE CPF"}</button></div>)})}</div></div></div></div>
-)
+
+export default function PlataformaV21() {
+  const [cands, setCands] = useState(CANDIDATOS_INICIAIS)
+  const [cpf, setCpf] = useState("")
+  const [cpfValido, setCpfValido] = useState(false)
+  const [liberado, setLiberado] = useState(false)
+  const [showModal, setShowModal] = useState(false)
+  const [codigo, setCodigo] = useState("")
+  const [isDono, setIsDono] = useState(false)
+
+  useEffect(() => {
+    const c = localStorage.getItem("cands_v21")
+    if (c) setCands(JSON.parse(c))
+    if (localStorage.getItem("acesso_liberado_2026") === "true") setLiberado(true)
+
+    // Verifica se é dono
+    if (typeof window!== "undefined") {
+      const url = new URL(window.location.href)
+      if (url.searchParams.get("dono") === "americo") {
+        localStorage.setItem("dono_americo", "true")
+        setIsDono(true)
+      }
+      if (localStorage.getItem("dono_americo") === "true" || localStorage.getItem("admin_logado") === "true") {
+        setIsDono(true)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    localStorage.setItem("cands_v21", JSON.stringify(cands))
+  }, [cands])
+
+  function validarCPF() {
+    if (cpf.length >= 11) {
+      if (!liberado) {
+        setShowModal(true)
+      } else {
+        setCpfValido(true)
+        alert("CPF Validado! Pode votar!")
+      }
+    } else {
+      alert("Digite CPF válido 11 números")
+    }
+  }
+
+  function votar(id: number) {
+    if (!cpfValido) { alert("Valide o CPF primeiro!"); return }
+    const novos = cands.map(c => c.id === id? {...c, votos: c.votos + 1 } : c)
+    setCands(novos)
+    setCpf("")
+    setCpfValido(false)
+  }
+
+  function liberarAcesso() {
+    const cd = codigo.trim().toUpperCase()
+    if (cd.startsWith("LIBERADO-") || cd === "GRAZI2026") {
+      localStorage.setItem("acesso_liberado_2026", "true")
+      // >>> AQUI SALVA O CODIGO COMO SENHA DO CLIENTE <<<
+      if (cd.startsWith("LIBERADO-")) {
+        localStorage.setItem("codigo_cliente", cd)
+      }
+      setLiberado(true)
+      setShowModal(false)
+      setCodigo("")
+      alert(`ACESSO LIBERADO! \n\nSeu código ${cd} agora é sua senha para entrar no ADMIN!\nVocê pode trocar a senha lá dentro!`)
+    } else {
+      alert("Código inválido! Use LIBERADO-XXXX que recebeu no Zap")
+    }
+  }
+
+  const totalVotos = cands.reduce((s, c) => s + c.votos, 0)
+  const ranking = [...cands].sort((a, b) => b.votos - a.votos)
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#e2e8f0", fontFamily: "system-ui" }}>
+      {/* HEADER LIMPO SEM SEU NOME */}
+      <div style={{ background: "black", color: "white", padding: "10px 16px", borderBottom: "4px solid #facc15", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+        <div>
+          <div style={{ fontWeight: 900, color: "#facc15", fontSize: 16 }}>PLATAFORMA ELEITORAL 2026</div>
+          <div style={{ fontSize: 11, fontWeight: 700 }}>V21 • 11 CANDIDATOS • {totalVotos} VOTOS</div>
+        </div>
+        <div style={{ display: "flex", gap: 6 }}>
+          <div style={{ background: "#facc15", color: "black", padding: "6px 12px", borderRadius: 20, fontWeight: 900, fontSize: 11 }}>AO VIVO</div>
+          <a href="/admin" style={{ background: "white", color: "black", padding: "6px 12px", borderRadius: 20, fontWeight: 900, fontSize: 11, textDecoration: "none", border: "2px solid black" }}>ADMIN</a>
+          {isDono && <a href="/admin/vendas" style={{ background: "#22c55e", color: "white", padding: "6px 12px", borderRadius: 20, fontWeight: 900, fontSize: 11, textDecoration: "none", border: "2px solid black" }}>VENDAS</a>}
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, padding: 16 }}>
+        {/* ESQUERDA */}
+        <div>
+          <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12 }}>
+            <div style={{ fontWeight: 900, fontSize: 12, display: "flex", justifyContent: "space-between" }}>
+              <span>🏆 RANKING - {totalVotos} VOTOS - 100%</span>
+            </div>
+            <div style={{ border: "2px dashed black", borderRadius: 8, padding: 12, marginTop: 8, textAlign: "center", minHeight: 60 }}>
+              {totalVotos === 0? <span style={{ color: "#3b82f6", fontWeight: 700, fontSize: 12 }}>Nenhum voto ainda</span> :
+                ranking.map((c, i) => <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: i === 0? 900 : 700, background: i === 0? "#fef08a" : "white", padding: "4px 6px", borderRadius: 4, marginBottom: 2 }}><span>{i + 1}º {c.nome}</span><span>{c.votos} - {totalVotos? Math.round(c.votos * 100 / totalVotos) : 0}%</span></div>)
+              }
+            </div>
+          </div>
+
+          <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12, marginTop: 12 }}>
+            <div style={{ fontWeight: 900, fontSize: 12 }}>VALIDAÇÃO CPF</div>
+            <input value={cpf} onChange={e => setCpf(e.target.value.replace(/\D/g, ""))} placeholder="000.000.000-00" style={{ width: "100%", padding: 10, border: "2px solid black", borderRadius: 8, marginTop: 8, textAlign: "center", boxSizing: "border-box" }} />
+            <button onClick={validarCPF} style={{ width: "100%", marginTop: 8, background: cpfValido? "#22c55e" : "black", color: cpfValido? "white" : "#facc15", fontWeight: 900, padding: 10, borderRadius: 8, border: "none", cursor: "pointer" }}>{cpfValido? "CPF OK - PODE VOTAR" : "VALIDAR CPF"}</button>
+            {!liberado && <div style={{ fontSize: 10, color: "red", fontWeight: 700, textAlign: "center", marginTop: 6 }}>Libere acesso para validar CPF</div>}
+          </div>
+        </div>
+
+        {/* DIREITA CANDIDATOS */}
+        <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 900, fontSize: 13 }}>
+            <span>🗳️ CANDIDATOS</span><span style={{ background: "black", color: "white", padding: "2px 8px", borderRadius: 12, fontSize: 10 }}>11 CANDIDATOS</span>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: 10, marginTop: 12 }}>
+            {cands.map(c => (
+              <div key={c.id} style={{ border: "3px solid black", borderRadius: 10, padding: 8, textAlign: "center", background: "white" }}>
+                <img src={c.foto} alt={c.nome} style={{ width: 50, height: 50, borderRadius: "50%", border: "2px solid black" }} />
+                <div style={{ fontWeight: 900, fontSize: 12, marginTop: 4 }}>{c.nome}</div>
+                <div style={{ background: "#facc15", fontWeight: 800, fontSize: 9, padding: "2px 4px", borderRadius: 4, border: "2px solid black", marginTop: 2 }}>{c.partido}</div>
+                <div style={{ fontSize: 10, fontWeight: 700, marginTop: 2 }}>{c.votos} votos - {totalVotos? Math.round(c.votos * 100 / totalVotos) : 0}%</div>
+                <button onClick={() => votar(c.id)} style={{ width: "100%", marginTop: 6, background: cpfValido? "#22c55e" : "#94a3b8", color: "white", fontWeight: 900, fontSize: 10, padding: 6, borderRadius: 6, border: "2px solid black", cursor: "pointer" }}>VOTAR CPF</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* MODAL DE PAGAMENTO E LIBERAÇÃO */}
+      {showModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999, padding: 16 }}>
+          <div style={{ background: "white", padding: 20, borderRadius: 16, border: "4px solid #facc15", maxWidth: 380, width: "100%", textAlign: "center" }}>
+            <h2 style={{ margin: 0, fontWeight: 900 }}>🔒 ACESSO BLOQUEADO</h2>
+            <div style={{ fontSize: 13, marginTop: 6 }}>Para votar precisa liberar acesso</div>
+            <div style={{ background: "#fef08a", border: "2px solid black", borderRadius: 8, padding: 10, marginTop: 12, textAlign: "left", fontSize: 12 }}>
+              <b>PIX: 62981796690</b><br/>
+              <b>Nome: AMERICO QUISPE QUISPE</b><br/>
+              <b>Valor: R$ 97,00</b><br/><br/>
+              1. Faça PIX R$97<br/>
+              2. Envie comprovante no Zap<br/>
+              3. Receba seu código LIBERADO-XXXX<br/>
+              4. Esse código já será sua senha do ADMIN!
+            </div>
+            <input value={codigo} onChange={e => setCodigo(e.target.value)} placeholder="Digite seu código LIBERADO-XXXX" style={{ width: "100%", padding: 12, border: "3px solid black", borderRadius: 8, marginTop: 12, textAlign: "center", fontWeight: 900, textTransform: "uppercase", boxSizing: "border-box" }} />
+            <button onClick={liberarAcesso} style={{ width: "100%", marginTop: 10, background: "#16a34a", color: "white", fontWeight: 900, padding: 12, borderRadius: 8, border: "3px solid black", cursor: "pointer" }}>LIBERAR ACESSO</button>
+            <button onClick={() => setShowModal(false)} style={{ width: "100%", marginTop: 8, background: "white", color: "black", fontWeight: 700, padding: 8, borderRadius: 8, border: "2px solid black", cursor: "pointer" }}>Fechar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
 }
