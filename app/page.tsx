@@ -2,17 +2,17 @@
 import { useState, useEffect } from "react"
 
 const CANDIDATOS_INICIAIS = [
-  { id: 1, nome: "Bolsonaro", partido: "PL - 22", votos: 0, foto: "https://i.pravatar.cc/100?img=1" },
-  { id: 2, nome: "Ciro Gomes", partido: "PDT - 12", votos: 0, foto: "https://i.pravatar.cc/100?img=2" },
-  { id: 3, nome: "Eduardo Leite", partido: "PSDB - 45", votos: 0, foto: "https://i.pravatar.cc/100?img=3" },
-  { id: 4, nome: "Erika Hilton", partido: "PSOL - 50", votos: 0, foto: "https://i.pravatar.cc/100?img=4" },
-  { id: 5, nome: "Lula", partido: "PT - 13", votos: 0, foto: "https://i.pravatar.cc/100?img=5" },
-  { id: 6, nome: "Simone Tebet", partido: "MDB - 15", votos: 0, foto: "https://i.pravatar.cc/100?img=6" },
-  { id: 7, nome: "Marina Silva", partido: "REDE - 18", votos: 0, foto: "https://i.pravatar.cc/100?img=7" },
-  { id: 8, nome: "Nikolas Ferreira", partido: "PL - 22", votos: 0, foto: "https://i.pravatar.cc/100?img=8" },
-  { id: 9, nome: "Tabata Amaral", partido: "PSB - 40", votos: 0, foto: "https://i.pravatar.cc/100?img=9" },
-  { id: 10, nome: "Romeu Zema", partido: "NOVO - 30", votos: 0, foto: "https://i.pravatar.cc/100?img=10" },
-  { id: 11, nome: "Ronaldo Caiado", partido: "UNIAO - 44", votos: 0, foto: "https://i.pravatar.cc/100?img=11" },
+  { id: 1, nome: "Bolsonaro", partido: "PL - 22", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=1" },
+  { id: 2, nome: "Ciro Gomes", partido: "PDT - 12", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=2" },
+  { id: 3, nome: "Eduardo Leite", partido: "PSDB - 45", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=3" },
+  { id: 4, nome: "Erika Hilton", partido: "PSOL - 50", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=4" },
+  { id: 5, nome: "Lula", partido: "PT - 13", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=5" },
+  { id: 6, nome: "Simone Tebet", partido: "MDB - 15", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=6" },
+  { id: 7, nome: "Marina Silva", partido: "REDE - 18", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=7" },
+  { id: 8, nome: "Nikolas Ferreira", partido: "PL - 22", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=8" },
+  { id: 9, nome: "Tabata Amaral", partido: "PSB - 40", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=9" },
+  { id: 10, nome: "Romeu Zema", partido: "NOVO - 30", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=10" },
+  { id: 11, nome: "Ronaldo Caiado", partido: "UNIAO - 44", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=11" },
 ]
 
 export default function PlataformaV21() {
@@ -28,8 +28,6 @@ export default function PlataformaV21() {
     const c = localStorage.getItem("cands_v21")
     if (c) setCands(JSON.parse(c))
     if (localStorage.getItem("acesso_liberado_2026") === "true") setLiberado(true)
-
-    // Verifica se é dono
     if (typeof window!== "undefined") {
       const url = new URL(window.location.href)
       if (url.searchParams.get("dono") === "americo") {
@@ -48,40 +46,25 @@ export default function PlataformaV21() {
 
   function validarCPF() {
     if (cpf.length >= 11) {
-      if (!liberado) {
-        setShowModal(true)
-      } else {
-        setCpfValido(true)
-        alert("CPF Validado! Pode votar!")
-      }
-    } else {
-      alert("Digite CPF válido 11 números")
-    }
+      if (!liberado) { setShowModal(true) }
+      else { setCpfValido(true); alert("CPF Validado! Pode votar!") }
+    } else alert("Digite CPF válido 11 números")
   }
 
   function votar(id: number) {
     if (!cpfValido) { alert("Valide o CPF primeiro!"); return }
     const novos = cands.map(c => c.id === id? {...c, votos: c.votos + 1 } : c)
-    setCands(novos)
-    setCpf("")
-    setCpfValido(false)
+    setCands(novos); setCpf(""); setCpfValido(false)
   }
 
   function liberarAcesso() {
     const cd = codigo.trim().toUpperCase()
     if (cd.startsWith("LIBERADO-") || cd === "GRAZI2026") {
       localStorage.setItem("acesso_liberado_2026", "true")
-      // >>> AQUI SALVA O CODIGO COMO SENHA DO CLIENTE <<<
-      if (cd.startsWith("LIBERADO-")) {
-        localStorage.setItem("codigo_cliente", cd)
-      }
-      setLiberado(true)
-      setShowModal(false)
-      setCodigo("")
-      alert(`ACESSO LIBERADO! \n\nSeu código ${cd} agora é sua senha para entrar no ADMIN!\nVocê pode trocar a senha lá dentro!`)
-    } else {
-      alert("Código inválido! Use LIBERADO-XXXX que recebeu no Zap")
-    }
+      if (cd.startsWith("LIBERADO-")) localStorage.setItem("codigo_cliente", cd)
+      setLiberado(true); setShowModal(false); setCodigo("")
+      alert(`ACESSO LIBERADO! Seu código ${cd} é sua senha do ADMIN!`)
+    } else alert("Código inválido! Use LIBERADO-XXXX")
   }
 
   const totalVotos = cands.reduce((s, c) => s + c.votos, 0)
@@ -89,7 +72,6 @@ export default function PlataformaV21() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#e2e8f0", fontFamily: "system-ui" }}>
-      {/* HEADER LIMPO SEM SEU NOME */}
       <div style={{ background: "black", color: "white", padding: "10px 16px", borderBottom: "4px solid #facc15", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
         <div>
           <div style={{ fontWeight: 900, color: "#facc15", fontSize: 16 }}>PLATAFORMA ELEITORAL 2026</div>
@@ -103,7 +85,6 @@ export default function PlataformaV21() {
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, padding: 16 }}>
-        {/* ESQUERDA */}
         <div>
           <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12 }}>
             <div style={{ fontWeight: 900, fontSize: 12, display: "flex", justifyContent: "space-between" }}>
@@ -111,7 +92,7 @@ export default function PlataformaV21() {
             </div>
             <div style={{ border: "2px dashed black", borderRadius: 8, padding: 12, marginTop: 8, textAlign: "center", minHeight: 60 }}>
               {totalVotos === 0? <span style={{ color: "#3b82f6", fontWeight: 700, fontSize: 12 }}>Nenhum voto ainda</span> :
-                ranking.map((c, i) => <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: i === 0? 900 : 700, background: i === 0? "#fef08a" : "white", padding: "4px 6px", borderRadius: 4, marginBottom: 2 }}><span>{i + 1}º {c.nome}</span><span>{c.votos} - {totalVotos? Math.round(c.votos * 100 / totalVotos) : 0}%</span></div>)
+                ranking.map((c, i) => <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: i === 0? 900 : 700, background: i === 0? "#fef08a" : "white", padding: "4px 6px", borderRadius: 4, marginBottom: 2 }}><span>{i + 1}º {c.nome} - {c.cargo}</span><span>{c.votos} - {totalVotos? Math.round(c.votos * 100 / totalVotos) : 0}%</span></div>)
               }
             </div>
           </div>
@@ -124,7 +105,6 @@ export default function PlataformaV21() {
           </div>
         </div>
 
-        {/* DIREITA CANDIDATOS */}
         <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 900, fontSize: 13 }}>
             <span>🗳️ CANDIDATOS</span><span style={{ background: "black", color: "white", padding: "2px 8px", borderRadius: 12, fontSize: 10 }}>11 CANDIDATOS</span>
@@ -132,8 +112,10 @@ export default function PlataformaV21() {
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(140px,1fr))", gap: 10, marginTop: 12 }}>
             {cands.map(c => (
               <div key={c.id} style={{ border: "3px solid black", borderRadius: 10, padding: 8, textAlign: "center", background: "white" }}>
-                <img src={c.foto} alt={c.nome} style={{ width: 50, height: 50, borderRadius: "50%", border: "2px solid black" }} />
+                <img src={c.foto} alt={c.nome} style={{ width: 50, height: 50, borderRadius: "50%", border: "2px solid black", objectFit: "cover" }} />
                 <div style={{ fontWeight: 900, fontSize: 12, marginTop: 4 }}>{c.nome}</div>
+                {/* AQUI O CARGO EMBAIXO DO NOME */}
+                <div style={{ fontSize: 8, fontWeight: 800, color: "#1e293b", background: "#e2e8f0", borderRadius: 4, padding: "2px 4px", marginTop: 2, border: "1px solid black" }}>{c.cargo || "Presidente"}</div>
                 <div style={{ background: "#facc15", fontWeight: 800, fontSize: 9, padding: "2px 4px", borderRadius: 4, border: "2px solid black", marginTop: 2 }}>{c.partido}</div>
                 <div style={{ fontSize: 10, fontWeight: 700, marginTop: 2 }}>{c.votos} votos - {totalVotos? Math.round(c.votos * 100 / totalVotos) : 0}%</div>
                 <button onClick={() => votar(c.id)} style={{ width: "100%", marginTop: 6, background: cpfValido? "#22c55e" : "#94a3b8", color: "white", fontWeight: 900, fontSize: 10, padding: 6, borderRadius: 6, border: "2px solid black", cursor: "pointer" }}>VOTAR CPF</button>
@@ -143,7 +125,6 @@ export default function PlataformaV21() {
         </div>
       </div>
 
-      {/* MODAL DE PAGAMENTO E LIBERAÇÃO */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999, padding: 16 }}>
           <div style={{ background: "white", padding: 20, borderRadius: 16, border: "4px solid #facc15", maxWidth: 380, width: "100%", textAlign: "center" }}>
