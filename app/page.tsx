@@ -19,10 +19,29 @@ export default function Home(){
 
       <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:20}}>
         <div style={{background:"#FFFFFF",border:"5px solid black",borderRadius:16,padding:20,boxShadow:"0 8px 0 black"}}>
-          <h2 style={{fontWeight:900,fontSize:20,color:"black",margin:0}}>🏆 RANKING - {votos.length} VOTOS</h2>
-          <div style={{border:"3px dashed black",borderRadius:12,padding:20,textAlign:"center",margin:"15px 0",background:"#FFFFFF",color:"black",fontWeight:900}}>Nenhum voto ainda</div>
-          <h3 style={{fontWeight:900,color:"black"}}>TODOS CANDIDATOS - {cands.length} CANDIDATOS</h3>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginTop:10}}>
+          <div style={{background:"#FFFFFF",border:"5px solid black",borderRadius:16,padding:16}}>
+  <h2 style={{fontWeight:900,fontSize:20,color:"black",margin:0}}>🏆 RANKING - {votos.length} VOTOS</h2>
+  <div style={{border:"3px dashed black",borderRadius:12,padding:20,textAlign:"center",marginTop:10}}>
+    {votos.length===0 ? (
+      <span>Nenhum voto ainda</span>
+    ) : (
+      cands
+        .map((c:any)=>{
+          const qtd=votos.filter((v:any)=>v.candidato_id===c.id).length;
+          return {...c, qtd}
+        })
+        .filter((c:any)=>c.qtd>0)
+        .sort((a:any,b:any)=>b.qtd - a.qtd)
+        .map((c:any, i:number)=>(
+          <div key={c.id} style={{display:"flex",justifyContent:"space-between",background:"#fef08a",padding:8,borderRadius:8,marginBottom:5,fontWeight:900}}>
+            <span>{i+1}º {c.nome} - {c.qtd} votos</span>
+            <span>{((c.qtd/votos.length)*100).toFixed(1)}%</span>
+          </div>
+        ))
+    )}
+  </div>
+
+  <h3 style={{fontWeight:900,color:"black",marginTop:20}}>TODOS CANDIDATOS - {cands.length} CANDIDATOS</h3>
             {cands.map((c:any)=>{
               const qtd=votos.filter((v:any)=>v.candidato_id===c.id).length;
               return (
