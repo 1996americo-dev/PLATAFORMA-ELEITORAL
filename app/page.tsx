@@ -12,8 +12,10 @@ const [cpf,setCpf]=React.useState("")
 const [cpfOk,setCpfOk]=React.useState(false)
 const [liberado,setLiberado]=React.useState(false)
 const [codigo,setCodigo]=React.useState("")
+const [isDono,setIsDono]=React.useState(false)
 React.useEffect(()=>{
 if(localStorage.getItem("acesso_liberado_2026")==="true") setLiberado(true)
+if(localStorage.getItem("admin_logado")==="true") setIsDono(true)
 const c=localStorage.getItem("cands")
 const v=localStorage.getItem("votos")
 if(c) setCands(JSON.parse(c))
@@ -44,15 +46,14 @@ function votar(id:number){if(!cpfOk) return alert("Valide CPF!"); const l=cpf.re
 const ranking=cands.map((c:any)=>({...c,qtd:votos.filter((v:any)=>v.candidato_id===c.id).length})).filter((c:any)=>c.qtd>0).sort((a:any,b:any)=>b.qtd-a.qtd)
 if(!liberado) return(
 <div style={{minHeight:"100vh",background:"linear-gradient(135deg,#000,#1a1a2e)",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"system-ui"}}>
-<div style={{background:"white",borderRadius:24,padding:30,maxWidth:440,width:"100%",border:"5px solid #facc15",boxShadow:"0 20px 40px rgba(0,0,0,0.4)",textAlign:"center"}}>
+<div style={{background:"white",borderRadius:24,padding:30,maxWidth:440,width:"100%",border:"5px solid #facc15",textAlign:"center"}}>
 <div style={{fontSize:60}}>🗳️</div>
 <h1 style={{fontWeight:900,fontSize:28,margin:"10px 0"}}>PLATAFORMA ELEITORAL 2026</h1>
 <div style={{background:"#fef08a",border:"3px solid black",borderRadius:12,padding:12,fontWeight:800,fontSize:13}}>V21 - 11 Candidatos + Ranking + CPF</div>
 <div style={{marginTop:20,background:"#f8fafc",border:"3px dashed black",borderRadius:14,padding:18,textAlign:"left"}}>
 <div style={{fontWeight:900}}>LIBERAR ACESSO: {VALOR}</div>
-<div style={{marginTop:10,fontSize:13,fontWeight:700}}>PIX Celular:</div>
-<div style={{display:"flex",gap:8,marginTop:6}}><input value={PIX} readOnly style={{flex:1,padding:12,border:"3px solid black",borderRadius:10,fontWeight:900,textAlign:"center"}}/><button onClick={copiar} style={{background:"#facc15",border:"3px solid black",borderRadius:10,padding:"0 16px",fontWeight:900,cursor:"pointer"}}>COPIAR</button></div>
-<div style={{marginTop:10,fontSize:12,fontWeight:700}}>Nome: <b>{NOME_PIX}</b><br/>Banco: Qualquer banco</div>
+<div style={{display:"flex",gap:8,marginTop:10}}><input value={PIX} readOnly style={{flex:1,padding:12,border:"3px solid black",borderRadius:10,fontWeight:900,textAlign:"center"}}/><button onClick={copiar} style={{background:"#facc15",border:"3px solid black",borderRadius:10,padding:"0 16px",fontWeight:900,cursor:"pointer"}}>COPIAR</button></div>
+<div style={{marginTop:10,fontSize:12,fontWeight:700}}>Nome: <b>{NOME_PIX}</b></div>
 </div>
 <button onClick={zap} style={{width:"100%",marginTop:14,background:"#22c55e",color:"white",fontWeight:900,padding:14,borderRadius:12,border:"3px solid black",cursor:"pointer"}}>JA PAGUEI - ENVIAR COMPROVANTE</button>
 <div style={{marginTop:20,borderTop:"3px solid black",paddingTop:16}}><b>TEM CODIGO?</b><input value={codigo} onChange={e=>setCodigo(e.target.value)} placeholder="GRAZI2026" style={{width:"100%",marginTop:8,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/><button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",fontWeight:900,padding:12,borderRadius:10,cursor:"pointer"}}>LIBERAR ACESSO</button></div>
@@ -62,11 +63,11 @@ if(!liberado) return(
 return(
 <div style={{minHeight:"100vh",background:"#f1f5f9",padding:16,fontFamily:"system-ui"}}>
 <div style={{background:"linear-gradient(90deg,#000,#1e293b)",color:"white",borderRadius:16,padding:"18px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",border:"4px solid black",flexWrap:"wrap",gap:10}}>
-<div><div style={{color:"#facc15",fontWeight:900,fontSize:22}}>PLATAFORMA ELEITORAL 2026 • V21</div><div style={{fontSize:12,fontWeight:700,opacity:0.9}}>✅ {NOME_PIX} • {cands.length} CANDIDATOS • {votos.length} VOTOS</div></div>
-<div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+<div><div style={{color:"#facc15",fontWeight:900,fontSize:22}}>PLATAFORMA ELEITORAL 2026 • V21</div><div style={{fontSize:12,fontWeight:700,opacity:0.9}}>✅ {NOME_PIX} • {cands.length} CANDIDATOS • {votos.length} VOTOS {isDono?"• MODO DONO":""}</div></div>
+<div style={{display:"flex",gap:6,alignItems:"center"}}>
 <div style={{background:"#facc15",color:"black",fontWeight:900,padding:"6px 12px",borderRadius:20,fontSize:12,border:"2px solid black"}}>AO VIVO</div>
-<a href="/admin" style={{background:"white",color:"black",fontWeight:900,padding:"6px 12px",borderRadius:8,border:"2px solid black",textDecoration:"none",fontSize:12}}>👩‍💼 ADMIN</a>
-<a href="/admin/vendas" style={{background:"#22c55e",color:"white",fontWeight:900,padding:"6px 12px",borderRadius:8,border:"2px solid black",textDecoration:"none",fontSize:12}}>💰 VENDAS</a>
+<a href="/admin" style={{background:"white",color:"black",fontWeight:900,padding:"8px 14px",borderRadius:8,border:"2px solid black",textDecoration:"none",fontSize:12}}>👩‍💼 ADMIN</a>
+{isDono && <a href="/admin/vendas" style={{background:"#22c55e",color:"white",fontWeight:900,padding:"8px 14px",borderRadius:8,border:"2px solid black",textDecoration:"none",fontSize:12}}>💰 VENDAS</a>}
 </div>
 </div>
 <div style={{display:"grid",gridTemplateColumns:"340px 1fr",gap:16,marginTop:16}}>
@@ -79,13 +80,12 @@ return(
 </div>
 <div style={{background:"white",border:"4px solid black",borderRadius:14,padding:14,marginTop:12}}>
 <h3 style={{margin:0,fontWeight:900}}>🔒 VALIDACAO CPF</h3>
-<div style={{fontSize:11,fontWeight:700,margin:"6px 0",color:cpfOk?"#16a34a":"#64748b"}}>{cpfOk?"✅ CPF LIBERADO":"Digite CPF para votar"}</div>
-<input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",padding:12,border:`3px solid ${cpfOk?"#22c55e":"black"}`,borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
+<input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",padding:12,border:`3px solid ${cpfOk?"#22c55e":"black"}`,borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box",marginTop:8}}/>
 <button onClick={validaCpf} style={{width:"100%",marginTop:8,background:cpfOk?"#22c55e":"black",color:"white",fontWeight:900,padding:12,borderRadius:10,border:"none",cursor:"pointer"}}>{cpfOk?"VALIDADO ✅":"VALIDAR CPF"}</button>
 </div>
 </div>
 <div style={{background:"white",border:"4px solid black",borderRadius:14,padding:14}}>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}><h2 style={{margin:0,fontWeight:900}}>🗳️ CANDIDATOS</h2><div style={{background:"black",color:"white",fontWeight:800,padding:"4px 10px",borderRadius:20,fontSize:11}}>{cands.length} CANDIDATOS</div></div>
+<h2 style={{margin:0,fontWeight:900}}>🗳️ CANDIDATOS</h2>
 <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(190px,1fr))",gap:12,marginTop:12}}>
 {cands.map((c:any)=>{
 const q=votos.filter((v:any)=>v.candidato_id===c.id).length
@@ -97,8 +97,8 @@ return(
 <div style={{fontWeight:900,fontSize:15,marginTop:8}}>{c.nome}</div>
 <div style={{background:"#facc15",border:"2px solid black",borderRadius:20,padding:"2px 8px",display:"inline-block",fontWeight:800,fontSize:11,marginTop:4}}>{c.sigla}</div>
 <div style={{marginTop:8,fontSize:12,fontWeight:800}}>{q} votos • {perc}%</div>
-<div style={{background:"#e2e8f0",height:6,borderRadius:10,marginTop:6,overflow:"hidden"}}><div style={{height:"100%",width:`${perc}%`,background:c.cor,transition:"0.5s"}}/></div>
-<button onClick={()=>votar(c.id)} style={{width:"100%",marginTop:10,background:cpfOk?"#16a34a":"#94a3b8",color:"white",fontWeight:900,padding:10,borderRadius:10,border:"2px solid black",cursor:cpfOk?"pointer":"not-allowed",fontSize:13}}>{cpfOk?"VOTAR ✅":"VALIDE CPF"}</button>
+<div style={{background:"#e2e8f0",height:6,borderRadius:10,marginTop:6,overflow:"hidden"}}><div style={{height:"100%",width:`${perc}%`,background:c.cor}}/></div>
+<button onClick={()=>votar(c.id)} style={{width:"100%",marginTop:10,background:cpfOk?"#16a34a":"#94a3b8",color:"white",fontWeight:900,padding:10,borderRadius:10,border:"2px solid black",cursor:cpfOk?"pointer":"not-allowed"}}>{cpfOk?"VOTAR ✅":"VALIDE CPF"}</button>
 </div>
 )
 })}
