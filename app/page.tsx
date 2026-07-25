@@ -1,141 +1,117 @@
 "use client"
-import { useState, useEffect } from "react"
+import React from "react"
+const PIX = "62981796690"
+const NOME = "AMERICO QUISPE QUISPE"
+const ZAP = "5562981796690"
 
-const CANDIDATOS_INICIAIS = [
-  { id: 1, nome: "Bolsonaro", partido: "PL - 22", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=1", propostas: "" },
-  { id: 2, nome: "Ciro Gomes", partido: "PDT - 12", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=2", propostas: "" },
-  { id: 3, nome: "Eduardo Leite", partido: "PSDB - 45", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=3", propostas: "" },
-  { id: 4, nome: "Erika Hilton", partido: "PSOL - 50", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=4", propostas: "" },
-  { id: 5, nome: "Lula", partido: "PT - 13", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=5", propostas: "" },
-  { id: 6, nome: "Simone Tebet", partido: "MDB - 15", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=6", propostas: "" },
-  { id: 7, nome: "Marina Silva", partido: "REDE - 18", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=7", propostas: "" },
-  { id: 8, nome: "Nikolas Ferreira", partido: "PL - 22", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=8", propostas: "" },
-  { id: 9, nome: "Tabata Amaral", partido: "PSB - 40", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=9", propostas: "" },
-  { id: 10, nome: "Romeu Zema", partido: "NOVO - 30", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=10", propostas: "" },
-  { id: 11, nome: "Ronaldo Caiado", partido: "UNIAO - 44", cargo: "Presidente", votos: 0, foto: "https://i.pravatar.cc/100?img=11", propostas: "" },
+const CANDIDATOS_INI = [
+{name:"Bolsonaro",part:"PL - 22",foto:"https://i.pravatar.cc/100?img=1"},
+{name:"Ciro Gomes",part:"PDT - 12",foto:"https://i.pravatar.cc/100?img=2"},
+{name:"Eduardo Leite",part:"PSDB - 45",foto:"https://i.pravatar.cc/100?img=3"},
+{name:"Erika Hilton",part:"PSOL - 50",foto:"https://i.pravatar.cc/100?img=4"},
+{name:"Lula",part:"PT - 13",foto:"https://i.pravatar.cc/100?img=5"},
+{name:"Simone Tebet",part:"MDB - 15",foto:"https://i.pravatar.cc/100?img=6"},
+{name:"Marina Silva",part:"REDE - 18",foto:"https://i.pravatar.cc/100?img=7"},
+{name:"Nikolas Ferreira",part:"PL - 22",foto:"https://i.pravatar.cc/100?img=8"},
+{name:"Tabata Amaral",part:"PSB - 40",foto:"https://i.pravatar.cc/100?img=9"},
+{name:"Romeu Zema",part:"NOVO - 30",foto:"https://i.pravatar.cc/100?img=10"},
+{name:"Ronaldo Caiado",part:"UNIÃO - 44",foto:"https://i.pravatar.cc/100?img=11"},
 ]
 
-export default function PlataformaV21() {
-  const [cands, setCands] = useState(CANDIDATOS_INICIAIS)
-  const [cpf, setCpf] = useState("")
-  const [cpfValido, setCpfValido] = useState(false)
-  const [liberado, setLiberado] = useState(false)
-  const [showModal, setShowModal] = useState(false)
-  const [codigo, setCodigo] = useState("")
-  const [isDono, setIsDono] = useState(false)
-  const [verProposta, setVerProposta] = useState<any>(null)
+export default function Home(){
+const [liberado,setLiberado]=React.useState(false)
+const [ehDono,setEhDono]=React.useState(false)
+const [codigoInput,setCodigoInput]=React.useState("")
+const [cpf,setCpf]=React.useState("")
+const [votos,setVotos]=React.useState<number[]>(Array(11).fill(0))
 
-  useEffect(() => {
-    const c = localStorage.getItem("cands_v21")
-    if (c) setCands(JSON.parse(c))
-    if (localStorage.getItem("acesso_liberado_2026") === "true") setLiberado(true)
-    if (typeof window!== "undefined") {
-      const url = new URL(window.location.href)
-      if (url.searchParams.get("dono") === "americo") {
-        localStorage.setItem("dono_americo", "true"); setIsDono(true)
-      }
-      if (localStorage.getItem("dono_americo") === "true" || localStorage.getItem("admin_logado") === "true") setIsDono(true)
-    }
-  }, [])
-
-  useEffect(() => { localStorage.setItem("cands_v21", JSON.stringify(cands)) }, [cands])
-
-  function validarCPF() {
-    if (cpf.length >= 11) {
-      if (!liberado) { setShowModal(true) }
-      else { setCpfValido(true); alert("CPF Validado! Pode votar!") }
-    } else alert("Digite CPF válido")
+React.useEffect(()=>{
+  const url = new URL(window.location.href)
+  if(url.searchParams.get("dono")==="americo"){
+    localStorage.setItem("dono_americo","true")
+    localStorage.setItem("codigo_liberado","DONO")
+    setLiberado(true); setEhDono(true)
   }
+  if(localStorage.getItem("dono_americo")==="true") setEhDono(true)
+  const cod = localStorage.getItem("codigo_liberado")
+  if(cod && (cod.startsWith("LIBERADO-") || cod==="DONO")) setLiberado(true)
+  const v = localStorage.getItem("votos_v21")
+  if(v) setVotos(JSON.parse(v))
+},[])
 
-  function votar(id: number) {
-    if (!cpfValido) { alert("Valide o CPF!"); return }
-    setCands(cands.map(c => c.id === id? {...c, votos: c.votos + 1 } : c))
-    setCpf(""); setCpfValido(false)
-  }
+function liberar(){
+  if(!codigoInput.startsWith("LIBERADO-")) return alert("Código inválido! Use LIBERADO-XXXX")
+  localStorage.setItem("codigo_liberado",codigoInput)
+  setLiberado(true)
+}
+function votar(i:number){
+  const n=[...votos]; n[i]++; setVotos(n); localStorage.setItem("votos_v21",JSON.stringify(n))
+}
+const total = votos.reduce((a,b)=>a+b,0)
 
-  function liberarAcesso() {
-    const cd = codigo.trim().toUpperCase()
-    if (cd.startsWith("LIBERADO-") || cd === "GRAZI2026") {
-      localStorage.setItem("acesso_liberado_2026", "true")
-      if (cd.startsWith("LIBERADO-")) localStorage.setItem("codigo_cliente", cd)
-      setLiberado(true); setShowModal(false); setCodigo("")
-      alert(`LIBERADO! Código ${cd} é sua senha ADMIN!`)
-    } else alert("Código inválido!")
-  }
+if(!liberado){
+return(
+<div style={{minHeight:"100vh",background:"black",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"system-ui"}}>
+<div style={{background:"white",borderRadius:20,border:"6px solid #facc15",padding:24,maxWidth:420,width:"100%",textAlign:"center"}}>
+<div style={{fontSize:44}}>🔒</div>
+<h1 style={{fontWeight:900,margin:"6px 0"}}>SITE BLOQUEADO</h1>
+<p style={{fontSize:13,fontWeight:700}}>Digite seu código para liberar a plataforma</p>
+<div style={{display:"flex",gap:6,marginTop:12}}>
+<input value={codigoInput} onChange={e=>setCodigoInput(e.target.value)} placeholder="LIBERADO-1234" style={{flex:1,padding:12,border:"3px solid black",borderRadius:8,fontWeight:900,textAlign:"center"}}/>
+<button onClick={liberar} style={{background:"black",color:"#facc15",fontWeight:900,padding:"10px 14px",borderRadius:8,border:"3px solid black",cursor:"pointer"}}>LIBERAR</button>
+</div>
+<div style={{background:"#fef9c3",border:"3px solid black",borderRadius:12,padding:14,marginTop:14}}>
+<div style={{fontWeight:900}}>R$97 - PIX: {PIX}</div>
+<div style={{fontSize:11,fontWeight:700}}>{NOME}</div>
+<button onClick={()=>{navigator.clipboard.writeText(PIX);alert("PIX COPIADO")}} style={{width:"100%",marginTop:8,background:"white",border:"2px solid black",borderRadius:8,padding:8,fontWeight:900,cursor:"pointer"}}>COPIAR PIX</button>
+<a href={`https://wa.me/${ZAP}?text=Fiz o PIX ${PIX} segue comprovante`} target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",fontWeight:900,padding:10,borderRadius:8,textDecoration:"none",border:"3px solid black"}}>ENVIAR COMPROVANTE NO ZAP</a>
+</div>
+</div>
+</div>
+)
+}
 
-  const totalVotos = cands.reduce((s, c) => s + c.votos, 0)
-  const ranking = [...cands].sort((a, b) => b.votos - a.votos)
+return(
+<div style={{minHeight:"100vh",background:"#f0efe5",fontFamily:"system-ui"}}>
+<div style={{background:"#1a1a1a",color:"#facc15",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid #facc15"}}>
+<div style={{fontWeight:900,fontSize:14}}>PLATAFORMA ELEITORAL 2026<br/><span style={{fontSize:11,color:"white",fontWeight:700}}>V21 • 11 CANDIDATOS • {total} VOTOS</span></div>
+<div style={{display:"flex",gap:6}}>
+<span style={{background:"#facc15",color:"black",padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:900,border:"2px solid black"}}>AO VIVO</span>
+<a href="/admin" style={{background:"white",color:"black",padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:900,textDecoration:"none",border:"2px solid black"}}>ADMIN</a>
+{ehDono && <a href="/admin/vendas" style={{background:"#22c55e",color:"white",padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:900,textDecoration:"none",border:"2px solid black"}}>VENDAS</a>}
+</div>
+</div>
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#e2e8f0", fontFamily: "system-ui" }}>
-      <div style={{ background: "black", color: "white", padding: "10px 16px", borderBottom: "4px solid #facc15", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div><div style={{ fontWeight: 900, color: "#facc15" }}>PLATAFORMA ELEITORAL 2026</div><div style={{ fontSize: 11 }}>V21 • {cands.length} CANDIDATOS • {totalVotos} VOTOS</div></div>
-        <div style={{ display: "flex", gap: 6 }}><div style={{ background: "#facc15", color: "black", padding: "6px 12px", borderRadius: 20, fontWeight: 900, fontSize: 11 }}>AO VIVO</div><a href="/admin" style={{ background: "white", color: "black", padding: "6px 12px", borderRadius: 20, fontWeight: 900, fontSize: 11, textDecoration: "none", border: "2px solid black" }}>ADMIN</a>{isDono && <a href="/admin/vendas" style={{ background: "#22c55e", color: "white", padding: "6px 12px", borderRadius: 20, fontWeight: 900, fontSize: 11, textDecoration: "none", border: "2px solid black" }}>VENDAS</a>}</div>
-      </div>
+<div style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12,padding:12}}>
+<div>
+<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10}}>
+<div style={{fontWeight:900,fontSize:11}}>RANKING - {total} VOTOS</div>
+<div style={{border:"2px dashed #cbd5e1",borderRadius:8,padding:20,marginTop:8,textAlign:"center",color:"#3b82f6",fontWeight:700,fontSize:12}}>{total===0?"Nenhum voto ainda":votos.map((v,i)=>`${CANDIDATOS_INI[i].name}: ${v}`).join(", ")}</div>
+</div>
+<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10,marginTop:10}}>
+<div style={{fontWeight:900,fontSize:11}}>VALIDAÇÃO CPF</div>
+<input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:8,padding:8,border:"2px solid black",borderRadius:6,textAlign:"center",boxSizing:"border-box"}}/>
+<button style={{width:"100%",marginTop:6,background:"black",color:"#facc15",fontWeight:900,padding:8,borderRadius:6,border:"2px solid black"}}>VALIDAR CPF</button>
+<div style={{fontSize:9,color:"#ef4444",marginTop:4,textAlign:"center"}}>Libere pontos para validar CPF!</div>
+</div>
+</div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16, padding: 16 }}>
-        <div>
-          <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12 }}>
-            <div style={{ fontWeight: 900, fontSize: 12 }}>🏆 RANKING - {totalVotos} VOTOS</div>
-            <div style={{ border: "2px dashed black", borderRadius: 8, padding: 12, marginTop: 8, textAlign: "center", minHeight: 60 }}>
-              {totalVotos === 0? <span style={{ color: "#3b82f6", fontWeight: 700, fontSize: 12 }}>Nenhum voto ainda</span> :
-                ranking.map((c, i) => <div key={c.id} style={{ display: "flex", justifyContent: "space-between", fontSize: 11, fontWeight: i === 0? 900 : 700, background: i === 0? "#fef08a" : "white", padding: "4px 6px", borderRadius: 4, marginBottom: 2 }}><span>{i + 1}º {c.nome}</span><span>{c.votos} - {totalVotos? Math.round(c.votos*100/totalVotos):0}%</span></div>)
-              }
-            </div>
-          </div>
-          <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12, marginTop: 12 }}>
-            <div style={{ fontWeight: 900, fontSize: 12 }}>VALIDAÇÃO CPF</div>
-            <input value={cpf} onChange={e => setCpf(e.target.value.replace(/\D/g, ""))} placeholder="000.000.000-00" style={{ width: "100%", padding: 10, border: "2px solid black", borderRadius: 8, marginTop: 8, textAlign: "center", boxSizing: "border-box" }} />
-            <button onClick={validarCPF} style={{ width: "100%", marginTop: 8, background: cpfValido? "#22c55e" : "black", color: cpfValido? "white" : "#facc15", fontWeight: 900, padding: 10, borderRadius: 8, border: "none", cursor: "pointer" }}>{cpfValido? "CPF OK - PODE VOTAR" : "VALIDAR CPF"}</button>
-            {!liberado && <div style={{ fontSize: 10, color: "red", fontWeight: 700, textAlign: "center", marginTop: 6 }}>Libere acesso para validar CPF</div>}
-          </div>
-        </div>
-
-        <div style={{ background: "white", border: "3px solid black", borderRadius: 12, padding: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 900, fontSize: 13 }}><span>🗳️ CANDIDATOS</span><span style={{ background: "black", color: "white", padding: "2px 8px", borderRadius: 12, fontSize: 10 }}>{cands.length} CANDIDATOS</span></div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 10, marginTop: 12 }}>
-            {cands.map(c => (
-              <div key={c.id} style={{ border: "3px solid black", borderRadius: 10, padding: 8, textAlign: "center", background: "white", cursor: c.propostas? "pointer" : "default" }} onClick={() => c.propostas && setVerProposta(c)}>
-                <img src={c.foto} alt={c.nome} style={{ width: 50, height: 50, borderRadius: "50%", border: "2px solid black", objectFit: "cover" }} />
-                <div style={{ fontWeight: 900, fontSize: 12, marginTop: 4 }}>{c.nome}</div>
-                <div style={{ fontSize: 8, fontWeight: 800, color: "#1e293b", background: "#e2e8f0", borderRadius: 4, padding: "2px 4px", marginTop: 2, border: "1px solid black" }}>{c.cargo || "Presidente"}</div>
-                <div style={{ background: "#facc15", fontWeight: 800, fontSize: 9, padding: "2px 4px", borderRadius: 4, border: "2px solid black", marginTop: 2 }}>{c.partido}</div>
-                <div style={{ fontSize: 10, fontWeight: 700, marginTop: 2 }}>{c.votos} votos - {totalVotos? Math.round(c.votos*100/totalVotos):0}%</div>
-                {c.propostas && <div style={{ fontSize: 7, background: "#dcfce7", border: "1px solid #16a34a", padding: "2px 4px", borderRadius: 3, marginTop: 4, color: "#166534", fontWeight: 700 }}>📄 Ver Propostas - Clique aqui</div>}
-                <button onClick={(e) => { e.stopPropagation(); votar(c.id)}} style={{ width: "100%", marginTop: 6, background: cpfValido? "#22c55e" : "#94a3b8", color: "white", fontWeight: 900, fontSize: 10, padding: 6, borderRadius: 6, border: "2px solid black", cursor: "pointer" }}>VOTAR CPF</button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {showModal && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999, padding: 16 }}>
-          <div style={{ background: "white", padding: 20, borderRadius: 16, border: "4px solid #facc15", maxWidth: 380, width: "100%", textAlign: "center" }}>
-            <h2 style={{ margin: 0, fontWeight: 900 }}>🔒 ACESSO BLOQUEADO</h2>
-            <div style={{ background: "#fef08a", border: "2px solid black", borderRadius: 8, padding: 10, marginTop: 12, textAlign: "left", fontSize: 12 }}><b>PIX: 62981796690</b><br/><b>AMERICO</b><br/><b>R$ 97,00</b></div>
-            <input value={codigo} onChange={e => setCodigo(e.target.value)} placeholder="LIBERADO-XXXX" style={{ width: "100%", padding: 12, border: "3px solid black", borderRadius: 8, marginTop: 12, textAlign: "center", fontWeight: 900, textTransform: "uppercase", boxSizing: "border-box" }} />
-            <button onClick={liberarAcesso} style={{ width: "100%", marginTop: 10, background: "#16a34a", color: "white", fontWeight: 900, padding: 12, borderRadius: 8, border: "3px solid black", cursor: "pointer" }}>LIBERAR</button>
-            <button onClick={() => setShowModal(false)} style={{ width: "100%", marginTop: 8, background: "white", color: "black", fontWeight: 700, padding: 8, borderRadius: 8, border: "2px solid black", cursor: "pointer" }}>Fechar</button>
-          </div>
-        </div>
-      )}
-
-      {verProposta && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999, padding: 16 }} onClick={() => setVerProposta(null)}>
-          <div style={{ background: "white", padding: 20, borderRadius: 16, border: "4px solid black", maxWidth: 400, width: "100%" }} onClick={e => e.stopPropagation()}>
-            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-              <img src={verProposta.foto} style={{ width: 60, height: 60, borderRadius: "50%", border: "3px solid black" }} alt="" />
-              <div><div style={{ fontWeight: 900, fontSize: 16 }}>{verProposta.nome}</div><div style={{ fontSize: 12, fontWeight: 700 }}>{verProposta.cargo} - {verProposta.partido}</div></div>
-            </div>
-            <div style={{ marginTop: 12, background: "#f8fafc", border: "2px solid black", borderRadius: 8, padding: 12 }}>
-              <div style={{ fontWeight: 900, fontSize: 12, marginBottom: 6 }}>📋 PROPOSTAS:</div>
-              <div style={{ fontSize: 13, whiteSpace: "pre-wrap" }}>{verProposta.propostas}</div>
-            </div>
-            <button onClick={() => setVerProposta(null)} style={{ width: "100%", marginTop: 12, background: "black", color: "white", fontWeight: 900, padding: 10, borderRadius: 8, cursor: "pointer" }}>FECHAR</button>
-          </div>
-        </div>
-      )}
-    </div>
-  )
+<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10}}>
+<div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:11}}><span>CANDIDATOS</span><span style={{background:"black",color:"white",padding:"2px 8px",borderRadius:10,fontSize:9}}>{CANDIDATOS_INI.length} CANDIDATOS</span></div>
+<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:10}}>
+{CANDIDATOS_INI.map((c,i)=>(
+<div key={i} style={{border:"2px solid black",borderRadius:10,padding:8,textAlign:"center"}}>
+<img src={c.foto} style={{width:50,height:50,borderRadius:"50%",border:"2px solid black"}}/>
+<div style={{fontWeight:900,fontSize:11,marginTop:4}}>{c.name}</div>
+<div style={{fontSize:8,fontWeight:700}}>{c.part}</div>
+<div style={{background:"#facc15",border:"2px solid black",borderRadius:6,marginTop:4,padding:2,fontSize:9,fontWeight:900}}>{c.part}</div>
+<div style={{fontSize:9,marginTop:2}}>{votos[i]} votos - {total?Math.round(votos[i]/total*100):0}%</div>
+<button onClick={()=>votar(i)} style={{width:"100%",marginTop:4,background:"#bfdbfe",border:"2px solid black",borderRadius:6,padding:4,fontSize:9,fontWeight:900,cursor:"pointer"}}>VOTAR CPF</button>
+</div>
+))}
+</div>
+</div>
+</div>
+</div>
+)
 }
