@@ -1,9 +1,8 @@
 "use client"
 import React from "react"
-export default function Vendas(){
-const [logado,setLogado]=React.useState(false)
-const [senha,setSenha]=React.useState("")
-function entrar(){ if(senha==="62981796690" || senha==="GRAZI2026") setLogado(true)}
-if(!logado) return <div style={{padding:20}}><input value={senha} onChange={e=>setSenha(e.target.value)} placeholder="62981796690"/><button onClick={entrar}>VER VENDAS</button></div>
-return <div style={{padding:20}}><h1>VENDAS - AMERICO QUISPE QUISPE</h1><p>PIX: 62981796690</p><p>Valor: R$ 97,00</p><a href="/">Voltar</a></div>
+export default function Admin(){
+const [s,setSs]=React.useState("")
+const [ok,setOk]=React.useState(false)
+if(!ok) return <div style={{padding:50,textAlign:"center"}}><h2>ADMIN CANDIDATOS</h2><input value={s} onChange={e=>setSs(e.target.value)} placeholder="Senha 62981796690"/><br/><br/><button onClick={()=>{if(s==="62981796690"||s==="GRAZI2026")setOk(true)}}>ENTRAR</button></div>
+return <div style={{padding:20}}><h1>Admin OK - {localStorage.getItem("cands") ? JSON.parse(localStorage.getItem("cands")!).length : 0} candidatos</h1><a href="/">Voltar pro site</a></div>
 }
