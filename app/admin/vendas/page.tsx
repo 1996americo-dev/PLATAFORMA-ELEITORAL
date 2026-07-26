@@ -1,80 +1,136 @@
 "use client"
 import React from "react"
 
-export default function Vendas(){
-const [nome,setNome]=React.useState("")
-const [lista,setLista]=React.useState<any[]>([])
+export default function VendasPage(){
+  const [liberado,setLiberado]=React.useState(false)
+  const [nomeCliente,setNomeCliente]=React.useState("")
+  const [vendas,setVendas]=React.useState<any[]>([])
 
-React.useEffect(()=>{
-  const s=localStorage.getItem("vendas_lista")
-  if(s) setLista(JSON.parse(s))
-},[])
+  React.useEffect(()=>{
+    const url=new URL(window.location.href)
+    if(url.searchParams.get("dono")==="americo"){
+      localStorage.setItem("dono_americo","true")
+      setLiberado(true)
+    }
+    const cod=localStorage.getItem("codigo_liberado")
+    if(cod==="DONO"){
+      setLiberado(true)
+    }
+    const v=localStorage.getItem("vendas_lista")
+    if(v){
+      setVendas(JSON.parse(v))
+    }
+  },[])
 
-function salvarLista(nova:any[]){
-  setLista(nova)
-  localStorage.setItem("vendas_lista",JSON.stringify(nova))
-}
+  function gerarCodigo(){
+    if(!nomeCliente){
+      alert("Digite nome do cliente")
+      return
+    }
+    const rand = Math.random().toString(36).substring(2,6).toUpperCase() + "-" + Math.random().toString(36).substring(2,6).toUpperCase()
+    const codigo = "LIBERADO-"+rand
+    const novaVenda = {
+      id: Date.now(),
+      nome: nomeCliente,
+      codigo: codigo,
+      data: new Date().toLocaleDateString(),
+      status: "ATIVO"
+    }
+    const lista = [...vendas, novaVenda]
+    setVendas(lista)
+    localStorage.setItem("vendas_lista", JSON.stringify(lista))
+    setNomeCliente("")
+    alert("Código gerado: "+codigo)
+  }
 
-function gerar(){
-  if(!nome) return alert("Digite o nome do cliente")
-  const codigo = "LIBERADO-"+Math.floor(1000+Math.random()*9000)
-  const novaVenda = {id:Date.now(),nome,codigo,data:new Date().toLocaleString(),link:`${window.location.origin}/?codigo=${codigo}`}
-  const nova=[novaVenda,...lista]
-  salvarLista(nova)
-  setNome("")
-  alert(`Código gerado: ${codigo}\nLink: ${novaVenda.link}`)
-}
+  function cancelarVenda(id:number, codigo:string){
+    if(!confirm("Cancelar cliente "+codigo+"? Ele não vai mais entrar no site!")){
+      return
+    }
+    // Remove da lista de vendas
+    const lista = vendas.filter(v=>v.id!==id)
+    setVendas(lista)
+    localStorage.setItem("vendas_lista", JSON.stringify(lista))
 
-function cancelar(id:number,codigo:string){
-  if(!confirm("Cancelar esse usuário? O código dele vai parar de funcionar!")) return
-  const nova=lista.filter(v=>v.id!==id)
-  salvarLista(nova)
-  // adiciona na lista de bloqueados
-  const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
-  bloqueados.push(codigo)
-  localStorage.setItem("codigos_bloqueados",JSON.stringify(bloqueados))
-  alert("Usuário cancelado! O código "+codigo+" não funciona mais.")
-}
+    // ADICIONA NA LISTA DE BLOQUEADOS - ISSO QUE DESLOGA O CLIENTE
+    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
+    if(!bloqueados.includes(codigo)){
+      bloqueados.push(codigo)
+      localStorage.setItem("codigos_bloqueados", JSON.stringify(bloqueados))
+    }
 
-function copiar(texto:string){
-  navigator.clipboard.writeText(texto)
-  alert("Copiado: "+texto)
-}
+    // Se o cliente tava com esse código logado, desloga ele
+    const codigoAtual = localStorage.getItem("codigo_liberado")
+    if(codigoAtual===codigo){
+      localStorage.removeItem("codigo_liberado")
+    }
 
-return(
-<div style={{fontFamily:"system-ui",minHeight:"100vh",background:"black",padding:20}}>
-<div style={{maxWidth:700,margin:"0 auto"}}>
-<h1 style={{color:"#facc15",fontWeight:900}}>💰 VENDAS - {lista.length} CLIENTES</h1>
-<a href="/admin" style={{color:"white",fontSize:12}}>← Voltar Admin</a>
+    alert("Cliente "+codigo+" CANCELADO! Agora quando ele tentar entrar no site principal vai deslogar!")
+  }
 
-<div style={{background:"white",border:"4px solid #facc15",borderRadius:12,padding:14,marginTop:14}}>
-<div style={{fontWeight:900,fontSize:12}}>GERAR NOVO ACESSO:</div>
-<div style={{display:"flex",gap:6,marginTop:8}}>
-<input value={nome} onChange={e=>setNome(e.target.value)} placeholder="Nome do cliente que pagou" style={{flex:1,padding:10,border:"3px solid black",borderRadius:8,fontWeight:700}}/>
-<button onClick={gerar} style={{background:"black",color:"#facc15",fontWeight:900,padding:"10px 16px",borderRadius:8,border:"3px solid black",cursor:"pointer"}}>GERAR CÓDIGO</button>
-</div>
-</div>
+  function reativarVenda(codigo:string){
+    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
+    const novo = bloqueados.filter((c:string)=>c!==codigo)
+    localStorage.setItem("codigos_bloqueados", JSON.stringify(novo))
+    alert(codigo+" reativado!")
+  }
 
-<div style={{marginTop:14}}>
-{lista.length===0 && <div style={{color:"white",textAlign:"center",padding:20,border:"2px dashed #facc15",borderRadius:10}}>Nenhuma venda ainda</div>}
-{lista.map(v=>(
-<div key={v.id} style={{background:"white",border:"3px solid black",borderRadius:10,padding:12,marginBottom:8}}>
-<div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-<div>
-<div style={{fontWeight:900}}>{v.nome}</div>
-<div style={{fontSize:11,fontWeight:700}}>Código: {v.codigo}</div>
-<div style={{fontSize:10,color:"#64748b"}}>{v.data}</div>
-</div>
-<button onClick={()=>cancelar(v.id,v.codigo)} style={{background:"#ef4444",color:"white",fontWeight:900,padding:"8px 12px",borderRadius:8,border:"2px solid black",cursor:"pointer",fontSize:11}}>CANCELAR</button>
-</div>
-<div style={{display:"flex",gap:6,marginTop:8}}>
-<button onClick={()=>copiar(v.codigo)} style={{flex:1,background:"#f1f5f9",border:"2px solid black",borderRadius:6,padding:6,fontSize:11,fontWeight:900,cursor:"pointer"}}>COPIAR CÓDIGO</button>
-<button onClick={()=>copiar(v.link)} style={{flex:1,background:"#22c55e",color:"white",border:"2px solid black",borderRadius:6,padding:6,fontSize:11,fontWeight:900,cursor:"pointer"}}>COPIAR LINK LIBERADO</button>
-</div>
-</div>
-))}
-</div>
-</div>
-</div>
-)
+  if(!liberado){
+    return(
+      <div style={{minHeight:"100vh",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"system-ui"}}>
+        <div style={{background:"white",padding:24,borderRadius:12}}>
+          <h1 style={{fontWeight:900}}>🔒 Só DONO</h1>
+          <p>Acesse com ?dono=americo</p>
+        </div>
+      </div>
+    )
+  }
+
+  return(
+    <div style={{minHeight:"100vh",background:"#0f172a",fontFamily:"system-ui",padding:20}}>
+      <div style={{maxWidth:900,margin:"0 auto"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <h1 style={{color:"#facc15",fontWeight:900,fontSize:22}}>💰 VENDAS - {vendas.length} CLIENTES</h1>
+          <a href="/admin?dono=americo" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:8,textDecoration:"none",fontWeight:800,fontSize:12}}>← Voltar Admin</a>
+        </div>
+
+        <div style={{background:"white",borderRadius:12,padding:16,border:"3px solid #facc15",marginBottom:20}}>
+          <div style={{fontWeight:900,fontSize:12,marginBottom:8}}>GERAR NOVO ACESSO:</div>
+          <div style={{display:"flex",gap:8}}>
+            <input value={nomeCliente} onChange={e=>setNomeCliente(e.target.value)} placeholder="Nome do cliente ex: Prefeitura Trindade" style={{flex:1,padding:10,border:"3px solid black",borderRadius:8,fontWeight:700}}/>
+            <button onClick={gerarCodigo} style={{background:"black",color:"#facc15",padding:"10px 16px",borderRadius:8,fontWeight:900,border:"2px solid black",cursor:"pointer"}}>GERAR CÓDIGO</button>
+          </div>
+        </div>
+
+        <div style={{background:"white",borderRadius:12,padding:16,border:"2px dashed #facc15"}}>
+          {vendas.length===0?(
+            <div style={{textAlign:"center",padding:20,fontWeight:900,color:"#64748b"}}>Nenhuma venda ainda</div>
+          ):(
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {vendas.map((v:any)=>(
+                <div key={v.id} style={{border:"2px solid black",borderRadius:10,padding:10,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div>
+                    <div style={{fontWeight:900,fontSize:13}}>{v.nome}</div>
+                    <div style={{fontSize:11,fontWeight:800,background:"black",color:"#facc15",padding:"2px 6px",borderRadius:4,display:"inline-block",marginTop:4}}>{v.codigo}</div>
+                    <div style={{fontSize:10,color:"#64748b",marginTop:2}}>{v.data} • {v.status}</div>
+                  </div>
+                  <div style={{display:"flex",gap:6}}>
+                    <button onClick={()=>reativarVenda(v.codigo)} style={{background:"#22c55e",color:"white",border:"2px solid black",padding:"6px 10px",borderRadius:6,fontWeight:800,fontSize:10,cursor:"pointer"}}>REATIVAR</button>
+                    <button onClick={()=>cancelarVenda(v.id, v.codigo)} style={{background:"#ef4444",color:"white",border:"2px solid black",padding:"6px 10px",borderRadius:6,fontWeight:800,fontSize:10,cursor:"pointer"}}>CANCELAR / BLOQUEAR</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div style={{marginTop:20,background:"#1e293b",color:"white",padding:12,borderRadius:8,fontSize:11}}>
+          <b>Como funciona o CANCELAR:</b><br/>
+          1. Quando clicar CANCELAR, o código vai pra lista codigos_bloqueados<br/>
+          2. Na mesma hora, no site principal se o cliente tentar entrar com esse código, aparece "ACESSO CANCELADO" e desloga!<br/>
+          3. Só ADMIN DONO continua funcionando!
+        </div>
+      </div>
+    </div>
+  )
 }

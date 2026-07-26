@@ -4,6 +4,7 @@ import React from "react"
 export default function AdminPage(){
   const [liberado,setLiberado]=React.useState(false)
   const [codInput,setCodInput]=React.useState("")
+  const [codigoAtual,setCodigoAtual]=React.useState("")
   const [candidatos,setCandidatos]=React.useState<any[]>([])
   const [votos,setVotos]=React.useState<number[]>([])
   const [nome,setNome]=React.useState("")
@@ -20,19 +21,26 @@ export default function AdminPage(){
     if(url.searchParams.get("dono")==="americo"){
       localStorage.setItem("dono_americo","true")
       localStorage.setItem("codigo_liberado","DONO")
+      setCodigoAtual("DONO")
       setLiberado(true)
     }
     const c=url.searchParams.get("codigo")
     if(c && c.toUpperCase().startsWith("LIBERADO-")){
       localStorage.setItem("codigo_liberado",c.toUpperCase())
+      setCodigoAtual(c.toUpperCase())
       setLiberado(true)
     }
     const cod=localStorage.getItem("codigo_liberado")
     if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
+      setCodigoAtual(cod)
       setLiberado(true)
     }
-    const cc=localStorage.getItem("candidatos_v21")
-    const v=localStorage.getItem("votos_v21")
+
+    // ISOLADO POR CLIENTE
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    const cc=localStorage.getItem("candidatos_"+codAtual)
+    const v=localStorage.getItem("votos_"+codAtual)
+
     if(cc){
       setCandidatos(JSON.parse(cc))
     } else {
@@ -64,7 +72,9 @@ export default function AdminPage(){
       return
     }
     localStorage.setItem("codigo_liberado",cod)
+    setCodigoAtual(cod)
     setLiberado(true)
+    window.location.reload()
   }
 
   function handleFoto(e:any){
@@ -99,10 +109,11 @@ export default function AdminPage(){
     }
     const lista=[...candidatos,novo]
     setCandidatos(lista)
-    localStorage.setItem("candidatos_v21",JSON.stringify(lista))
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    localStorage.setItem("candidatos_"+codAtual,JSON.stringify(lista))
     const nv=[...votos,0]
     setVotos(nv)
-    localStorage.setItem("votos_v21",JSON.stringify(nv))
+    localStorage.setItem("votos_"+codAtual,JSON.stringify(nv))
     setNome("");setPartido("");setNumero("");setLink("");setPropostas("");setCargoCustom("")
   }
 
@@ -112,8 +123,9 @@ export default function AdminPage(){
     const nv=votos.filter((_,idx)=>idx!==i)
     setCandidatos(lista)
     setVotos(nv)
-    localStorage.setItem("candidatos_v21",JSON.stringify(lista))
-    localStorage.setItem("votos_v21",JSON.stringify(nv))
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    localStorage.setItem("candidatos_"+codAtual,JSON.stringify(lista))
+    localStorage.setItem("votos_"+codAtual,JSON.stringify(nv))
   }
 
   const total=votos.reduce((a,b)=>a+b,0)
@@ -142,13 +154,12 @@ export default function AdminPage(){
   return(
     <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"system-ui"}}>
       <style>{`@media print{.no-print{display:none!important}}`}</style>
-
       <div style={{background:"linear-gradient(90deg,#0f172a,#1e293b)",color:"white",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid black"}}>
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{background:"#facc15",color:"black",width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:12,border:"2px solid black"}}>ADM</div>
           <div>
-            <div style={{fontWeight:900,fontSize:13}}>PAINEL ADMIN • 2026</div>
-            <div style={{fontSize:10,opacity:0.9}}>{candidatos.length} candidatos • {total} votos</div>
+            <div style={{fontWeight:900,fontSize:13}}>PAINEL ADMIN • {codigoAtual} • 2026</div>
+            <div style={{fontSize:10,opacity:0.9}}>{candidatos.length} candidatos • {total} votos • Cliente: {codigoAtual}</div>
           </div>
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -160,7 +171,7 @@ export default function AdminPage(){
       <div style={{maxWidth:1100,margin:"0 auto",padding:16,display:"flex",flexDirection:"column",gap:16}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}} className="no-print">
           <div style={{background:"white",borderRadius:12,padding:14,border:"3px solid black",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div><div style={{fontSize:10,fontWeight:900}}>TOTAL VOTOS</div><div style={{fontSize:22,fontWeight:900}}>{total}</div></div>
+            <div><div style={{fontSize:10,fontWeight:900}}>TOTAL VOTOS - {codigoAtual}</div><div style={{fontSize:22,fontWeight:900}}>{total}</div></div>
             <div style={{background:"#dcfce7",width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:"2px solid black"}}>📊</div>
           </div>
           <div style={{background:"white",borderRadius:12,padding:14,border:"3px solid black",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -175,7 +186,7 @@ export default function AdminPage(){
 
         <div style={{background:"white",borderRadius:14,border:"3px solid black",overflow:"hidden"}}>
           <div style={{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"3px solid black",background:"#f8fafc"}}>
-            <div style={{fontWeight:900,fontSize:13}}>🏆 RANKING FINAL - {total} VOTOS</div>
+            <div style={{fontWeight:900,fontSize:13}}>🏆 RANKING - CLIENTE {codigoAtual} - {total} VOTOS</div>
             <button onClick={()=>window.print()} className="no-print" style={{background:"black",color:"#facc15",border:"2px solid black",padding:"6px 14px",borderRadius:8,fontWeight:900,fontSize:11,cursor:"pointer"}}>🖨️ IMPRIMIR</button>
           </div>
           <div style={{overflowX:"auto"}}>
@@ -189,43 +200,30 @@ export default function AdminPage(){
         </div>
 
         <div className="no-print" style={{background:"white",borderRadius:14,border:"3px solid black",padding:16}}>
-          <div style={{fontWeight:900,fontSize:13,marginBottom:10,background:"black",color:"#facc15",padding:"6px 10px",borderRadius:8,display:"inline-block"}}>➕ CADASTRAR NOVO CANDIDATO</div>
+          <div style={{fontWeight:900,fontSize:13,marginBottom:10,background:"black",color:"#facc15",padding:"6px 10px",borderRadius:8,display:"inline-block"}}>➕ CADASTRAR - CLIENTE {codigoAtual}</div>
           <div style={{display:"grid",gridTemplateColumns:"1.5fr 0.8fr 0.3fr 140px 120px",gap:8,marginTop:10}}>
             <input value={nome} onChange={e=>setNome(e.target.value)} placeholder="Nome completo" style={{border:"3px solid black",borderRadius:8,padding:10,fontSize:12,fontWeight:700}}/>
             <input value={partido} onChange={e=>setPartido(e.target.value)} placeholder="Partido ex: PL" style={{border:"3px solid black",borderRadius:8,padding:10,fontSize:12,fontWeight:700}}/>
             <input value={numero} onChange={e=>setNumero(e.target.value)} placeholder="Nº" style={{border:"3px solid black",borderRadius:8,padding:10,fontSize:12,fontWeight:900,textAlign:"center"}}/>
             <select value={cargo} onChange={e=>setCargo(e.target.value)} style={{border:"3px solid black",borderRadius:8,padding:10,fontSize:12,fontWeight:700}}>
-              <option>Presidente</option>
-              <option>Governador</option>
-              <option>Senador</option>
-              <option>Deputado Federal</option>
-              <option>Deputado Estadual</option>
-              <option>Prefeito</option>
-              <option>Vereador</option>
-              <option>Outros</option>
+              <option>Presidente</option><option>Governador</option><option>Senador</option><option>Deputado Federal</option><option>Deputado Estadual</option><option>Prefeito</option><option>Vereador</option><option>Outros</option>
             </select>
-            <div>
-              <input ref={fileRef} type="file" accept="image/*" onChange={handleFoto} style={{display:"none"}}/>
-              <button onClick={()=>fileRef.current?.click()} style={{width:"100%",background:"#3b82f6",color:"white",border:"3px solid black",borderRadius:8,padding:10,fontSize:10,fontWeight:900,cursor:"pointer"}}>📸 SUBIR FOTOS</button>
-            </div>
+            <div><input ref={fileRef} type="file" accept="image/*" onChange={handleFoto} style={{display:"none"}}/><button onClick={()=>fileRef.current?.click()} style={{width:"100%",background:"#3b82f6",color:"white",border:"3px solid black",borderRadius:8,padding:10,fontSize:10,fontWeight:900,cursor:"pointer"}}>📸 SUBIR FOTOS</button></div>
           </div>
           {cargo==="Outros" && <input value={cargoCustom} onChange={e=>setCargoCustom(e.target.value)} placeholder="Digite o cargo: ex: Vice-Prefeito..." style={{width:"100%",marginTop:8,border:"3px solid #eab308",borderRadius:8,padding:10,fontSize:12,boxSizing:"border-box",background:"#fef9c3",fontWeight:700}}/>}
           <input value={link} onChange={e=>setLink(e.target.value)} placeholder="Link da foto ou use SUBIR FOTOS" style={{width:"100%",marginTop:8,border:"3px solid black",borderRadius:8,padding:10,fontSize:12,boxSizing:"border-box",fontWeight:700}}/>
-          <textarea value={propostas} onChange={e=>setPropostas(e.target.value)} placeholder="Propostas separadas por ; ex: Saúde; Educação; Segurança" style={{width:"100%",marginTop:8,border:"3px solid black",borderRadius:8,padding:10,fontSize:12,boxSizing:"border-box",fontWeight:700,minHeight:60}}/>
+          <textarea value={propostas} onChange={e=>setPropostas(e.target.value)} placeholder="Propostas separadas por ;" style={{width:"100%",marginTop:8,border:"3px solid black",borderRadius:8,padding:10,fontSize:12,boxSizing:"border-box",fontWeight:700,minHeight:60}}/>
           {link && <div style={{marginTop:8,display:"flex",alignItems:"center",gap:8}}><img src={link} style={{width:60,height:60,borderRadius:"50%",border:"3px solid black"}}/><span style={{fontSize:11,color:"#22c55e",fontWeight:900}}>✅ Foto pronta!</span></div>}
-          <button onClick={salvar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",border:"3px solid black",borderRadius:10,padding:12,fontWeight:900,fontSize:13,cursor:"pointer"}}>ADICIONAR CANDIDATO +</button>
+          <button onClick={salvar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",border:"3px solid black",borderRadius:10,padding:12,fontWeight:900,fontSize:13,cursor:"pointer"}}>ADICIONAR CANDIDATO - {codigoAtual} +</button>
         </div>
 
         <div className="no-print" style={{background:"white",borderRadius:14,border:"3px solid black",padding:16}}>
-          <div style={{fontWeight:900,fontSize:13,marginBottom:10}}>📋 LISTA - {candidatos.length} CANDIDATOS</div>
+          <div style={{fontWeight:900,fontSize:13,marginBottom:10}}>📋 LISTA - {codigoAtual} - {candidatos.length} CANDIDATOS</div>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {candidatos.map((c,i)=>(
               <div key={i} style={{border:"3px solid black",background:"#f8fafc",borderRadius:10,padding:"10px 12px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <img src={c.foto} style={{width:32,height:32,borderRadius:"50%",border:"2px solid black"}}/>
-                    <span style={{fontSize:12}}><b>{c.nome}</b> • {c.partido} • Nº {c.numero} • {c.cargo}</span>
-                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:10}}><img src={c.foto} style={{width:32,height:32,borderRadius:"50%",border:"2px solid black"}}/><span style={{fontSize:12}}><b>{c.nome}</b> • {c.partido} • Nº {c.numero} • {c.cargo}</span></div>
                   <button onClick={()=>remover(i)} style={{background:"#fee2e2",color:"#dc2626",border:"2px solid black",width:28,height:28,borderRadius:8,fontWeight:900,cursor:"pointer"}}>X</button>
                 </div>
                 <div style={{marginTop:6,background:"white",border:"2px solid black",borderRadius:6,padding:6,fontSize:10}}><b>Propostas:</b> {(c.propostas||[]).join(" • ")}</div>
@@ -233,7 +231,6 @@ export default function AdminPage(){
             ))}
           </div>
         </div>
-
       </div>
     </div>
   )

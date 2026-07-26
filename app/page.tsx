@@ -28,7 +28,6 @@ export default function Home(){
   React.useEffect(()=>{
     const url=new URL(window.location.href)
     let codAtualFinal = localStorage.getItem("codigo_liberado") || "GERAL"
-
     if(url.searchParams.get("dono")==="americo"){
       localStorage.setItem("dono_americo","true")
       localStorage.setItem("codigo_liberado","DONO")
@@ -36,7 +35,6 @@ export default function Home(){
       setCodigoAtual("DONO")
       setLiberado(true)
     }
-
     const c=url.searchParams.get("codigo")
     if(c && c.toUpperCase().startsWith("LIBERADO-")){
       localStorage.setItem("codigo_liberado",c.toUpperCase())
@@ -44,56 +42,43 @@ export default function Home(){
       setCodigoAtual(c.toUpperCase())
       setLiberado(true)
     }
-
     const cod=localStorage.getItem("codigo_liberado")
     if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
       codAtualFinal = cod
       setCodigoAtual(cod)
       setLiberado(true)
     }
-
-    // CORREÇÃO DO BUG - LÊ DE TODAS AS CHAVES PARA NÃO PERDER A GRAZIELE
+    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
+    if(bloqueados.includes(codAtualFinal)){
+      alert("⛔ ACESSO CANCELADO - Este código foi bloqueado pelo administrador!")
+      localStorage.removeItem("codigo_liberado")
+      localStorage.removeItem("cpf_validado_"+codAtualFinal)
+      setLiberado(false)
+      setCodigoAtual("")
+      return
+    }
     let cc = null
     let chaveUsada = ""
-
-    // Tenta achar onde tá a graziele - olha em todas as chaves possíveis
-    const chavesParaTentar = [
-      "candidatos_"+codAtualFinal,
-      "candidatos_DONO",
-      "candidatos_"+cod,
-      "candidatos_v21",
-      "candidatos_GERAL"
-    ]
-
+    const chavesParaTentar = ["candidatos_"+codAtualFinal,"candidatos_DONO","candidatos_v21","candidatos_GERAL"]
     for(const chave of chavesParaTentar){
       const tentativa = localStorage.getItem(chave)
       if(tentativa){
         try{
           const lista = JSON.parse(tentativa)
-          if(lista && lista.length > 0){
-            cc = tentativa
-            chaveUsada = chave
-            break
-          }
+          if(lista && lista.length > 0){ cc = tentativa; chaveUsada = chave; break }
         }catch(e){}
       }
     }
-
     if(cc){
       try{
         const listaAdmin=JSON.parse(cc)
         const convertidos=listaAdmin.map((x:any,idx:number)=>({
-          nome:x.nome,
-          part:x.partido?.split(" - ")[0]||x.partido||"OUTROS",
-          num:x.numero,
-          foto:x.foto,
+          nome:x.nome, part:x.partido?.split(" - ")[0]||x.partido||"OUTROS", num:x.numero, foto:x.foto,
           cor:["#22c55e","#f59e0b","#3b82f6","#ec4899","#ef4444","#a855f7","#14b8a6","#eab308","#f97316","#6366f1"][idx%10],
-          cargo:x.cargo||"Presidente",
-          propostas:x.propostas||["Sem propostas"]
+          cargo:x.cargo||"Presidente", propostas:x.propostas||["Sem propostas"]
         }))
         if(convertidos.length>0){
           setCAND(convertidos)
-          // Salva na chave correta isolada pra garantir que vai aparecer sempre
           if(chaveUsada!== "candidatos_"+codAtualFinal){
             localStorage.setItem("candidatos_"+codAtualFinal, JSON.stringify(listaAdmin))
           }
@@ -101,41 +86,24 @@ export default function Home(){
           if(v){
             try{
               const votosSalvos = JSON.parse(v)
-              if(votosSalvos.length === convertidos.length){
-                setVotos(votosSalvos)
-              } else {
-                setVotos(Array(convertidos.length).fill(0))
-              }
-            }catch{
-              setVotos(Array(convertidos.length).fill(0))
-            }
-          } else {
-            setVotos(Array(convertidos.length).fill(0))
-          }
+              if(votosSalvos.length === convertidos.length){ setVotos(votosSalvos) } else { setVotos(Array(convertidos.length).fill(0)) }
+            }catch{ setVotos(Array(convertidos.length).fill(0)) }
+          } else { setVotos(Array(convertidos.length).fill(0)) }
         }
-      }catch(e){
-        console.log("erro ler admin",e)
-      }
+      }catch(e){ console.log("erro ler admin",e) }
     } else {
       const v=localStorage.getItem("votos_"+codAtualFinal)
-      if(v){
-        setVotos(JSON.parse(v))
-      }
+      if(v){ setVotos(JSON.parse(v)) }
     }
-
     const cv=localStorage.getItem("cpf_validado_"+codAtualFinal)
-    if(cv){
-      setCpf(cv)
-      setCpfOk(true)
-    }
+    if(cv){ setCpf(cv); setCpfOk(true) }
   },[])
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
-      alert("Use LIBERADO-XXXX")
-      return
-    }
+    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){ alert("Use LIBERADO-XXXX"); return }
+    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
+    if(bloqueados.includes(cod)){ alert("⛔ Código cancelado/bloqueado!"); return }
     localStorage.setItem("codigo_liberado",cod)
     setCodigoAtual(cod)
     setLiberado(true)
@@ -144,51 +112,31 @@ export default function Home(){
 
   function validarCPF(){
     const limpo=cpf.replace(/\D/g,"")
-    if(limpo.length!==11){
-      alert("11 numeros")
-      return
-    }
+    if(limpo.length!==11){ alert("11 numeros"); return }
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     const ja:string[]=JSON.parse(localStorage.getItem("cpfs_votaram_"+codAtual)||"[]")
-    if(ja.includes(limpo)){
-      alert("Ja votou neste cliente")
-      return
-    }
+    if(ja.includes(limpo)){ alert("Ja votou neste cliente"); return }
     localStorage.setItem("cpf_validado_"+codAtual,limpo)
     setCpfOk(true)
   }
 
   function votar(i:number){
-    if(!cpfOk){
-      alert("Valide CPF lateral")
-      return
-    }
+    if(!cpfOk){ alert("Valide CPF lateral"); return }
     const limpo=cpf.replace(/\D/g,"")
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     const ja:string[]=JSON.parse(localStorage.getItem("cpfs_votaram_"+codAtual)||"[]")
-    if(ja.includes(limpo)){
-      alert("Ja votou neste cliente")
-      return
-    }
-    const n=[...votos]
-    n[i]++
+    if(ja.includes(limpo)){ alert("Ja votou neste cliente"); return }
+    const n=[...votos]; n[i]++
     setVotos(n)
     localStorage.setItem("votos_"+codAtual,JSON.stringify(n))
     ja.push(limpo)
     localStorage.setItem("cpfs_votaram_"+codAtual,JSON.stringify(ja))
     localStorage.removeItem("cpf_validado_"+codAtual)
-    setCpfOk(false)
-    setCpf("")
-    setVotoSel(null)
+    setCpfOk(false); setCpf(""); setVotoSel(null)
   }
 
   const total=votos.reduce((a,b)=>a+b,0)
-
-  const ranking=CAND.map((c,i)=>({
-  ...c,
-    v:votos[i]||0,
-    pct:total>0?Math.round((votos[i]||0)/total*100):0
-  })).sort((a,b)=>b.v-a.v)
+  const ranking=CAND.map((c,i)=>({...c, v:votos[i]||0, pct:total>0?Math.round((votos[i]||0)/total*100):0})).sort((a,b)=>b.v-a.v)
 
   if(!liberado){
     return(
@@ -214,7 +162,7 @@ export default function Home(){
 
   return(
     <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"system-ui"}}>
-      <div style={{background:"linear-gradient(90deg,#0f172a,#1e293b)",color:"white",padding:"14px 20px",display:"flex",justifyContent:"space-between"}}>
+      <div style={{background:"linear-gradient(90deg,#0f172a,#1e293b)",color:"white",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>26</div>
           <div>
@@ -222,7 +170,7 @@ export default function Home(){
             <div style={{fontSize:10,opacity:0.7}}>{total} VOTOS COMPUTADOS • {CAND.length} CANDIDATOS • Cliente: {codigoAtual}</div>
           </div>
         </div>
-        <div style={{display:"flex",gap:8}}>
+        <div style={{display:"flex",gap:8,alignItems:"center"}}>
           <span style={{background:"#22c55e",padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:900}}>● AO VIVO</span>
           <a href="/admin?dono=americo" style={{background:"white",color:"black",padding:"6px 12px",borderRadius:8,fontSize:11,textDecoration:"none",fontWeight:800}}>ADMIN</a>
         </div>
@@ -246,7 +194,6 @@ export default function Home(){
             <button onClick={validarCPF} style={{width:"100%",marginTop:8,background:cpfOk?"#22c55e":"#0f172a",color:"white",padding:10,borderRadius:8,fontWeight:900,fontSize:12,border:"none"}}>{cpfOk?"✅ VALIDADO - PODE VOTAR":"VALIDAR CPF"}</button>
           </div>
         </div>
-
         <div>
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
             <div style={{display:"flex",justifyContent:"space-between"}}>
