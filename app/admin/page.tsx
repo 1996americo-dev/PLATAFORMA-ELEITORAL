@@ -1,176 +1,127 @@
 "use client"
-import { useState, useEffect, useRef } from "react"
+import React from "react"
 
-export default function AdminFinal() {
-  const [senha, setSenha] = useState("")
-  const [ok, setOk] = useState(false)
-  const [novaSenha, setNovaSenha] = useState("")
-  const [cands, setCands] = useState<any[]>([])
-  const [nome, setNome] = useState("")
-  const [partido, setPartido] = useState("")
-  const [cargo, setCargo] = useState("Presidente")
-  const [cargoOutros, setCargoOutros] = useState("")
-  const [foto, setFoto] = useState("")
-  const [propostas, setPropostas] = useState("")
-  const fileRef = useRef<HTMLInputElement>(null)
+const DEFAULT = [
+{nome:"Bolsonaro",partido:"PL - 22",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=1",propostas:""},
+{nome:"Ciro Gomes",partido:"PDT - 12",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=2",propostas:""},
+{nome:"Eduardo Leite",partido:"PSDB - 45",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=3",propostas:""},
+{nome:"Erika Hilton",partido:"PSOL - 50",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=4",propostas:""},
+{nome:"Lula",partido:"PT - 13",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=5",propostas:""},
+{nome:"Simone Tebet",partido:"MDB - 15",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=6",propostas:""},
+{nome:"Marina Silva",partido:"REDE - 18",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=7",propostas:""},
+{nome:"Nikolas Ferreira",partido:"PL - 22",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=8",propostas:""},
+{nome:"Tabata Amaral",partido:"PSB - 40",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=9",propostas:""},
+{nome:"Romeu Zema",partido:"NOVO - 30",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=10",propostas:""},
+{nome:"Ronaldo Caiado",partido:"UNIÃO - 44",cargo:"Presidente",foto:"https://i.pravatar.cc/100?img=11",propostas:""},
+]
 
-  const SENHA_MESTRA = "62981796690"
+export default function Admin(){
+const [liberado,setLiberado]=React.useState(false)
+const [ehDono,setEhDono]=React.useState(false)
+const [codigoInput,setCodigoInput]=React.useState("")
+const [lista,setLista]=React.useState<any[]>([])
+const [nome,setNome]=React.useState("")
+const [partido,setPartido]=React.useState("")
+const [foto,setFoto]=React.useState("")
+const [senha,setSenha]=React.useState("sua2026")
 
-  useEffect(() => {
-    const c = localStorage.getItem("cands_v21")
-    if (c) setCands(JSON.parse(c))
-    if (localStorage.getItem("admin_logado") === "true") setOk(true)
-  }, [])
+React.useEffect(()=>{
+  const url = new URL(window.location.href)
+  const codUrl = url.searchParams.get("codigo")
+  const bloqueados: string[] = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
 
-  function entrar() {
-    const codigoCliente = localStorage.getItem("codigo_cliente") || ""
-    const senhaPersonalizada = localStorage.getItem("senha_admin_personalizada") || ""
-    const vendas = JSON.parse(localStorage.getItem("vendas_lista") || "[]")
-    const codigosValidos = vendas.map((v: any) => v.codigo)
-    if (senha === SENHA_MESTRA || senha === "GRAZI2026" || senha === codigoCliente || codigosValidos.includes(senha) || senha === senhaPersonalizada || senha === "123456") {
-      if (senha.startsWith("LIBERADO-")) localStorage.setItem("codigo_cliente", senha)
-      localStorage.setItem("admin_logado", "true")
-      setOk(true)
-    } else alert("Senha errada! Use LIBERADO-XXXX")
+  if(url.searchParams.get("dono")==="americo"){
+    localStorage.setItem("dono_americo","true")
+    localStorage.setItem("codigo_liberado","DONO")
+    setEhDono(true); setLiberado(true)
+  } else {
+    if(codUrl && codUrl.toUpperCase().startsWith("LIBERADO-")){
+      if(!bloqueados.includes(codUrl.toUpperCase())){
+        localStorage.setItem("codigo_liberado",codUrl.toUpperCase())
+        setLiberado(true)
+      }
+    }
+    const cod = localStorage.getItem("codigo_liberado")
+    if(cod && (cod.toUpperCase().startsWith("LIBERADO-") || cod==="DONO")){
+      if(cod==="DONO" || !bloqueados.includes(cod)){
+        if(localStorage.getItem("dono_americo")==="true") setEhDono(true)
+        setLiberado(true)
+      }
+    }
   }
 
-  function salvarNovaSenha() {
-    if (novaSenha.length < 4) { alert("Min 4"); return }
-    localStorage.setItem("senha_admin_personalizada", novaSenha)
-    alert(`SALVA: ${novaSenha}`); setNovaSenha("")
-  }
+  const s = localStorage.getItem("admin_candidatos")
+  if(s && JSON.parse(s).length>0) setLista(JSON.parse(s))
+  else { setLista(DEFAULT); localStorage.setItem("admin_candidatos",JSON.stringify(DEFAULT)) }
+},[])
 
-  function salvarCands(novos: any[]) {
-    setCands(novos)
-    localStorage.setItem("cands_v21", JSON.stringify(novos))
-  }
+function entrar(){
+  const cod = codigoInput.toUpperCase().trim()
+  const bloqueados: string[] = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
+  if(bloqueados.includes(cod)){ alert("Código CANCELADO!"); return }
+  if(!cod.startsWith("LIBERADO-")){ alert("Senha errada! Use LIBERADO-XXXX"); return }
+  localStorage.setItem("codigo_liberado",cod)
+  setLiberado(true)
+}
 
-  function handleFotoUpload(e: any) {
-    const file = e.target.files[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = (ev) => setFoto(ev.target?.result as string)
-    reader.readAsDataURL(file)
-  }
+function adicionar(){
+  if(!nome) return alert("Nome")
+  const novo = {nome,partido,cargo:"Presidente",foto:foto||`https://i.pravatar.cc/100?img=${lista.length+1}`,propostas:""}
+  const nova=[...lista,novo]
+  setLista(nova); localStorage.setItem("admin_candidatos",JSON.stringify(nova))
+  setNome(""); setPartido(""); setFoto("")
+}
 
-  function adicionarCand() {
-    if (!nome || !partido) { alert("Nome e Partido"); return }
-    const cargoFinal = cargo === "Outros" ? cargoOutros : cargo
-    if (!cargoFinal) { alert("Digite o cargo"); return }
-    const novo = { id: Date.now(), nome, partido, cargo: cargoFinal, votos: 0, foto: foto || `https://i.pravatar.cc/150?img=${Math.floor(Math.random()*70)}`, propostas }
-    salvarCands([...cands, novo])
-    setNome(""); setPartido(""); setFoto(""); setPropostas(""); setCargoOutros("")
-  }
+if(!liberado){
+return(
+<div style={{minHeight:"100vh",background:"black",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"system-ui"}}>
+<div style={{background:"white",border:"4px solid #facc15",borderRadius:14,padding:20,width:"100%",maxWidth:360,textAlign:"center"}}>
+<div style={{fontWeight:900}}>ADMIN - 11 CANDIDATOS</div>
+<input value={codigoInput} onChange={e=>setCodigoInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:8,fontWeight:900,textAlign:"center",boxSizing:"border-box"}}/>
+<button onClick={entrar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",fontWeight:900,padding:12,borderRadius:8,border:"3px solid black",cursor:"pointer"}}>ENTRAR</button>
+<a href="/" style={{display:"block",marginTop:8,fontSize:12}}>Voltar</a>
+</div>
+</div>
+)
+}
 
-  function removerCand(id: number) {
-    if (confirm("Remover?")) salvarCands(cands.filter(c => c.id !== id))
-  }
+return(
+<div style={{fontFamily:"system-ui",background:"#f0efe5",minHeight:"100vh"}}>
+<div style={{background:"black",color:"#facc15",padding:10,fontWeight:900,borderBottom:"4px solid #facc15",display:"flex",justifyContent:"space-between"}}>
+<span>ADMIN - {lista.length} CANDIDATOS - {ehDono?"SENHA PRÓPRIA ATIVA ✅":"CLIENTE ATIVO ✅"} - 0 VOTOS</span>
+<div style={{display:"flex",gap:6}}>
+<a href="/" style={{background:"white",color:"black",padding:"4px 8px",borderRadius:6,fontSize:10,textDecoration:"none",fontWeight:900}}>Site</a>
+{ehDono && <a href="/admin/vendas" style={{background:"#22c55e",color:"white",padding:"4px 8px",borderRadius:6,fontSize:10,textDecoration:"none",fontWeight:900}}>Vendas</a>}
+<a href="/" style={{background:"#ef4444",color:"white",padding:"4px 8px",borderRadius:6,fontSize:10,textDecoration:"none",fontWeight:900}}>Sair</a>
+</div>
+</div>
 
-  if (!ok) {
-    return (
-      <div style={{ minHeight: "100vh", background: "#0f172a", display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
-        <div style={{ background: "white", padding: 24, borderRadius: 16, border: "4px solid #facc15", width: 360, textAlign: "center" }}>
-          <h2 style={{ fontWeight: 900 }}>ADMIN - 11 CANDIDATOS</h2>
-          <input value={senha} onChange={e => setSenha(e.target.value)} placeholder="Senha ou LIBERADO-XXXX" style={{ width: "100%", padding: 12, border: "3px solid black", borderRadius: 10, textAlign: "center", fontWeight: 900, marginTop: 10, boxSizing: "border-box" }} />
-          <button onClick={entrar} style={{ width: "100%", marginTop: 10, padding: 12, background: "black", color: "#facc15", fontWeight: 900, borderRadius: 10, cursor: "pointer" }}>ENTRAR</button>
-          <a href="/" style={{ display: "block", marginTop: 10, fontWeight: 700, color: "black", fontSize: 13 }}>Voltar</a>
-        </div>
-      </div>
-    )
-  }
-
-  const totalVotos = cands.reduce((s, c) => s + c.votos, 0)
-  const ranking = [...cands].sort((a, b) => b.votos - a.votos)
-
-  return (
-    <div style={{ padding: 10, background: "#f1f5f9", minHeight: "100vh", fontFamily: "system-ui" }}>
-      <div style={{ background: "black", color: "#facc15", padding: 10, borderRadius: 10, fontWeight: 900, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <span>ADMIN - {cands.length} CANDIDATOS - SENHA PRÓPRIA ATIVA ✅ - {totalVotos} VOTOS</span>
-        <div style={{ display: "flex", gap: 6 }}>
-          <a href="/" style={{ background: "white", color: "black", padding: "5px 10px", borderRadius: 6, textDecoration: "none", fontSize: 11, fontWeight: 900 }}>Site</a>
-          <a href="/admin/vendas" style={{ background: "#22c55e", color: "white", padding: "5px 10px", borderRadius: 6, textDecoration: "none", fontSize: 11, fontWeight: 900 }}>Vendas</a>
-          <button onClick={() => { localStorage.removeItem("admin_logado"); setOk(false) }} style={{ background: "#ef4444", color: "white", padding: "5px 10px", borderRadius: 6, border: "none", fontWeight: 900, fontSize: 11, cursor: "pointer" }}>Sair</button>
-        </div>
-      </div>
-
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 280px", gap: 10, marginTop: 10 }}>
-        <div>
-          {/* CADASTRAR CANDIDATO COM TUDO */}
-          <div style={{ background: "white", border: "3px solid black", borderRadius: 10, padding: 10 }}>
-            <div style={{ fontWeight: 900, fontSize: 12 }}>+ CADASTRAR CANDIDATO</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 6, marginTop: 6 }}>
-              <input value={nome} onChange={e => setNome(e.target.value)} placeholder="Nome" style={{ padding: 8, border: "2px solid black", borderRadius: 6, fontSize: 12 }} />
-              <input value={partido} onChange={e => setPartido(e.target.value)} placeholder="Partido - ex PL - 22" style={{ padding: 8, border: "2px solid black", borderRadius: 6, fontSize: 12 }} />
-              <div style={{ display: "flex", gap: 4 }}>
-                <select value={cargo} onChange={e => setCargo(e.target.value)} style={{ flex: 1, padding: 8, border: "2px solid black", borderRadius: 6, fontSize: 11, fontWeight: 700 }}>
-                  <option>Presidente</option><option>Governador</option><option>Senador</option><option>Deputado Federal</option><option>Deputado Estadual</option><option>Prefeito</option><option>Vereador</option><option>Outros</option>
-                </select>
-                <button onClick={() => fileRef.current?.click()} style={{ background: "#3b82f6", color: "white", fontWeight: 900, borderRadius: 6, border: "2px solid black", fontSize: 10, padding: "0 8px", cursor: "pointer" }}>📸 SUBIR FOTOS</button>
-                <input ref={fileRef} type="file" accept="image/*" onChange={handleFotoUpload} style={{ display: "none" }} />
-              </div>
-            </div>
-            {cargo === "Outros" && <input value={cargoOutros} onChange={e => setCargoOutros(e.target.value)} placeholder="Digite o cargo: Ex: Conselheiro, Síndico..." style={{ width: "100%", padding: 8, border: "2px dashed #f59e0b", borderRadius: 6, marginTop: 6, fontSize: 12, boxSizing: "border-box" }} />}
-            <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
-              <input value={foto} onChange={e => setFoto(e.target.value)} placeholder="Ou cole link foto https://..." style={{ flex: 1, padding: 8, border: "2px solid black", borderRadius: 6, fontSize: 11 }} />
-              {foto && <img src={foto} style={{ width: 36, height: 36, borderRadius: 6, border: "2px solid black", objectFit: "cover" }} alt="" />}
-            </div>
-            <textarea value={propostas} onChange={e => setPropostas(e.target.value)} placeholder="Propostas do candidato..." style={{ width: "100%", padding: 8, border: "2px solid black", borderRadius: 6, marginTop: 6, fontSize: 11, height: 50, boxSizing: "border-box" }} />
-            <button onClick={adicionarCand} style={{ width: "100%", marginTop: 6, background: "black", color: "#facc15", fontWeight: 900, padding: 8, borderRadius: 6, border: "2px solid black", cursor: "pointer" }}>ADICIONAR CANDIDATO</button>
-          </div>
-
-          {/* LISTA */}
-          <div style={{ background: "white", border: "3px solid black", borderRadius: 10, padding: 10, marginTop: 10 }}>
-            <div style={{ fontWeight: 900, fontSize: 12 }}>LISTA - {cands.length} CANDIDATOS</div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(150px,1fr))", gap: 6, marginTop: 8 }}>
-              {cands.map(c => (
-                <div key={c.id} style={{ border: "2px solid black", borderRadius: 8, padding: 6, textAlign: "center", background: "white" }}>
-                  <img src={c.foto} style={{ width: 50, height: 50, borderRadius: "50%", border: "2px solid black", objectFit: "cover" }} alt="" />
-                  <div style={{ fontWeight: 900, fontSize: 11 }}>{c.nome}</div>
-                  <div style={{ fontSize: 8, background: "#facc15", border: "1px solid black", borderRadius: 3, fontWeight: 800, marginTop: 2 }}>{c.cargo}</div>
-                  <div style={{ fontSize: 9 }}>{c.partido}</div>
-                  <div style={{ fontSize: 9, fontWeight: 700 }}>{c.votos} votos</div>
-                  {c.propostas && <div style={{ fontSize: 7, background: "#f1f5f9", padding: 3, borderRadius: 3, marginTop: 2, textAlign: "left", maxHeight: 30, overflow: "hidden" }}>{c.propostas.slice(0, 60)}</div>}
-                  <button onClick={() => removerCand(c.id)} style={{ marginTop: 4, background: "#ef4444", color: "white", fontSize: 9, fontWeight: 900, padding: "2px 6px", borderRadius: 4, border: "1px solid black", cursor: "pointer" }}>REMOVER</button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* LADO DIREITO - RANKING + SENHA PEQUENA NO CANTO */}
-        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-          {/* SENHA PEQUENA NO CANTO */}
-          <div style={{ background: "white", border: "2px solid black", borderRadius: 8, padding: 8 }}>
-            <div style={{ fontWeight: 900, fontSize: 10 }}>🔑 SUA SENHA</div>
-            <div style={{ fontSize: 8, color: "#64748b" }}>Troque sua senha aqui</div>
-            <input value={novaSenha} onChange={e => setNovaSenha(e.target.value)} placeholder="ex: joao2026" style={{ width: "100%", padding: 6, border: "2px solid black", borderRadius: 4, fontSize: 10, marginTop: 4, boxSizing: "border-box" }} />
-            <button onClick={salvarNovaSenha} style={{ width: "100%", marginTop: 4, background: "#16a34a", color: "white", fontWeight: 900, fontSize: 10, padding: 6, borderRadius: 4, border: "1px solid black", cursor: "pointer" }}>SALVAR SENHA</button>
-            <div style={{ fontSize: 8, background: "#fef9c3", border: "1px solid black", padding: 3, borderRadius: 3, marginTop: 4 }}>
-              Atual: <b>{typeof window !== "undefined" ? (localStorage.getItem("senha_admin_personalizada") || localStorage.getItem("codigo_cliente") || "123456") : ""}</b>
-            </div>
-          </div>
-
-          {/* RANKING */}
-          <div style={{ background: "white", border: "3px solid black", borderRadius: 10, padding: 10 }}>
-            <div style={{ fontWeight: 900, fontSize: 11 }}>🏆 RANKING - {totalVotos} VOTOS - 100%</div>
-            <div style={{ marginTop: 6 }}>
-              {totalVotos === 0 ? <div style={{ textAlign: "center", padding: 20, color: "#3b82f6", fontWeight: 700, fontSize: 11 }}>Nenhum voto ainda</div> :
-                ranking.map((c, i) => (
-                  <div key={c.id} style={{ display: "flex", alignItems: "center", gap: 4, padding: "5px 2px", borderBottom: "1px solid #e2e8f0", background: i === 0 ? "#fef08a" : "white", borderRadius: 3 }}>
-                    <div style={{ fontWeight: 900, fontSize: 10 }}>{i + 1}º</div>
-                    <img src={c.foto} style={{ width: 24, height: 24, borderRadius: "50%", border: "1px solid black" }} alt="" />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 800, fontSize: 9 }}>{c.nome}</div>
-                      <div style={{ fontSize: 7 }}>{c.cargo} - {c.partido}</div>
-                    </div>
-                    <div style={{ fontWeight: 900, fontSize: 9 }}>{c.votos} - {totalVotos ? Math.round(c.votos * 100 / totalVotos) : 0}%</div>
-                  </div>
-                ))
-              }
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
+<div style={{display:"grid",gridTemplateColumns:"1fr 280px",gap:10,padding:10}}>
+<div>
+<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10}}>
+<div style={{fontWeight:900,fontSize:11}}>+ CADASTRAR CANDIDATO</div>
+<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 150px 100px",gap:6,marginTop:8}}>
+<input value={nome} onChange={e=>setNome(e.target.value)} placeholder="Nome" style={{border:"2px solid black",borderRadius:6,padding:6,fontSize:12}}/>
+<input value={partido} onChange={e=>setPartido(e.target.value)} placeholder="Partido" style={{border:"2px solid black",borderRadius:6,padding:6,fontSize:12}}/>
+<select style={{border:"2px solid black",borderRadius:6,padding:6,fontSize:12}}><option>Presidente</option></select>
+<button style={{background:"#3b82f6",color:"white",border:"2px solid black",borderRadius:6,fontWeight:900,fontSize:10}}>SUBIR FOTOS</button>
+</div>
+<input value={foto} onChange={e=>setFoto(e.target.value)} placeholder="Link foto https://..." style={{width:"100%",marginTop:6,border:"2px solid black",borderRadius:6,padding:6,fontSize:12,boxSizing:"border-box"}}/>
+<button onClick={adicionar} style={{width:"100%",marginTop:6,background:"black",color:"#facc15",fontWeight:900,padding:10,borderRadius:8,border:"3px solid black",cursor:"pointer"}}>ADICIONAR CANDIDATO</button>
+</div>
+<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10,marginTop:10}}>
+<div style={{fontWeight:900,fontSize:11}}>LISTA - {lista.length} CANDIDATOS</div>
+{lista.map((c,i)=><div key={i} style={{display:"flex",justifyContent:"space-between",border:"1px solid black",padding:6,borderRadius:6,marginBottom:4,fontSize:12}}><span><b>{c.nome}</b> - {c.partido}</span><button onClick={()=>{const n=lista.filter((_,idx)=>idx!==i); setLista(n); localStorage.setItem("admin_candidatos",JSON.stringify(n))}} style={{background:"#ef4444",color:"white",border:"1px solid black",borderRadius:4,fontSize:10}}>X</button></div>)}
+</div>
+</div>
+<div>
+<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10}}>
+<div style={{fontWeight:900,fontSize:10}}>{ehDono?"SUA SENHA DE DONA":"SEU ACESSO"}</div>
+<div style={{marginTop:6,fontSize:12,background:"#f1f5f9",border:"2px solid black",padding:8,borderRadius:6,fontWeight:900,textAlign:"center"}}>{typeof window!=="undefined"?localStorage.getItem("codigo_liberado"):""}</div>
+{!ehDono && <div style={{fontSize:9,marginTop:6,color:"#16a34a",fontWeight:700}}>Você está como CLIENTE. Só a dona vê VENDAS.</div>}
+</div>
+</div>
+</div>
+</div>
+)
 }
