@@ -83,7 +83,7 @@ return (
 <div style={{fontWeight:900}}>SITE BLOQUEADO</div>
 <div style={{background:"#fef9c3",border:"2px solid black",borderRadius:8,padding:8,marginTop:8,fontSize:11,textAlign:"left"}}>
 <div style={{fontWeight:900}}>PIX: 6291796690</div>
-<div>Valor R$ 49,90 - WhatsApp mesmo numero</div>
+<div>Valor R$ 97,90 - WhatsApp mesmo numero</div>
 </div>
 <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:8,padding:8,border:"3px solid black",borderRadius:8,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
 <button onClick={liberar} style={{width:"100%",marginTop:6,background:"black",color:"#facc15",padding:8,borderRadius:8,fontWeight:900}}>LIBERAR</button>
