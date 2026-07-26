@@ -104,13 +104,13 @@ export default function Home(){
           <div style={{fontWeight:900,fontSize:16,borderBottom:"3px solid black",paddingBottom:8}}>SITE BLOQUEADO 🔒</div>
           <div style={{background:"#fef9c3",border:"2px solid black",borderRadius:8,padding:8,marginTop:10,textAlign:"left",fontSize:11}}>
             <div style={{fontWeight:900}}>💰 LIBERE SEU ACESSO:</div>
-            <div style={{marginTop:4}}>PIX: <b>6291796690</b></div>
-            <div>Valor: <b>R$ 49,90</b></div>
+            <div style={{marginTop:4}}>PIX: <b>62981796690</b></div>
+            <div>Valor: <b>R$ 97,90</b></div>
             <div style={{fontSize:9,marginTop:4,color:"#555"}}>Envie comprovante no WhatsApp</div>
           </div>
           <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:10,padding:10,border:"3px solid black",borderRadius:8,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",padding:10,borderRadius:8,fontWeight:900,cursor:"pointer",border:"3px solid black"}}>LIBERAR ACESSO</button>
-          <a href="https://wa.me/556291796690?text=PIX%206291796690" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:10,borderRadius:8,fontWeight:900,textDecoration:"none",border:"3px solid black",fontSize:12}}>📲 WHATSAPP 6291796690</a>
+          <a href="https://wa.me/5562981796690?text=PIX%2062981796690" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:10,borderRadius:8,fontWeight:900,textDecoration:"none",border:"3px solid black",fontSize:12}}>📲 WHATSAPP 62981796690</a>
         </div>
       </div>
     )
