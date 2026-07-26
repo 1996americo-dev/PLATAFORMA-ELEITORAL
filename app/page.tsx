@@ -1,10 +1,6 @@
 "use client"
 import React from "react"
 
-const PIX = "62981796690"
-const NOME = "AMERICO QUISPE QUISPE"
-const ZAP = "5562981796690"
-
 const CANDIDATOS_INI = [
 {name:"Bolsonaro",part:"PL - 22",foto:"https://i.pravatar.cc/100?img=1"},
 {name:"Ciro Gomes",part:"PDT - 12",foto:"https://i.pravatar.cc/100?img=2"},
@@ -24,92 +20,73 @@ const [liberado,setLiberado]=React.useState(false)
 const [ehDono,setEhDono]=React.useState(false)
 const [codigoInput,setCodigoInput]=React.useState("")
 const [cpf,setCpf]=React.useState("")
+const [cpfValido,setCpfValido]=React.useState(false)
+const [msg,setMsg]=React.useState("")
 const [votos,setVotos]=React.useState<number[]>(Array(11).fill(0))
 
 React.useEffect(()=>{
   const url = new URL(window.location.href)
-  const bloqueados: string[] = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
-
-  // DONA
   if(url.searchParams.get("dono")==="americo"){
     localStorage.setItem("dono_americo","true")
     localStorage.setItem("codigo_liberado","DONO")
-    setLiberado(true); setEhDono(true); return
+    setEhDono(true); setLiberado(true)
   }
-  // LINK COM CODIGO
-  const codigoUrl = url.searchParams.get("codigo")
-  if(codigoUrl && codigoUrl.startsWith("LIBERADO-")){
-    if(bloqueados.includes(codigoUrl)){
-      alert("Este código foi CANCELADO!")
-      setLiberado(false); return
-    }
-    localStorage.setItem("codigo_liberado",codigoUrl)
-    setLiberado(true); return
+  const codUrl = url.searchParams.get("codigo")
+  if(codUrl && codUrl.toUpperCase().startsWith("LIBERADO-")){
+    localStorage.setItem("codigo_liberado",codUrl.toUpperCase())
+    setLiberado(true)
   }
-
-  if(localStorage.getItem("dono_americo")==="true") setEhDono(true)
-
   const cod = localStorage.getItem("codigo_liberado")
-  // VERIFICA SE FOI CANCELADO EM VENDAS
-  if(cod && bloqueados.includes(cod)){
-    localStorage.removeItem("codigo_liberado")
-    setLiberado(false)
-    return
+  if(cod && (cod.startsWith("LIBERADO-") || cod==="DONO")){
+    setLiberado(true)
+    if(localStorage.getItem("dono_americo")==="true") setEhDono(true)
   }
-
-  if(cod && (cod.startsWith("LIBERADO-") || cod==="DONO")) setLiberado(true)
-
   const v = localStorage.getItem("votos_v21")
   if(v) setVotos(JSON.parse(v))
+  const cpfOk = localStorage.getItem("cpf_validado")
+  if(cpfOk){ setCpf(cpfOk); setCpfValido(true) }
 },[])
 
 function liberar(){
-  const bloqueados: string[] = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
-  if(bloqueados.includes(codigoInput)){
-    alert("Este código foi CANCELADO! Fale com o suporte.")
-    return
-  }
-  if(!codigoInput.startsWith("LIBERADO-")){
-    alert("Código inválido! Peça seu código no WhatsApp após o pagamento.")
-    return
-  }
-  localStorage.setItem("codigo_liberado",codigoInput)
+  const cod = codigoInput.toUpperCase().trim()
+  if(!cod.startsWith("LIBERADO-") && cod!=="DONO"){ alert("Código inválido! Use LIBERADO-XXXX"); return }
+  localStorage.setItem("codigo_liberado",cod)
   setLiberado(true)
 }
 
-function votar(i:number){
-  const n=[...votos]; n[i]++; setVotos(n); localStorage.setItem("votos_v21",JSON.stringify(n))
+function validarCPF(){
+  const limpo = cpf.replace(/\D/g,"")
+  if(limpo.length!==11){ alert("CPF precisa ter 11 números!"); return }
+  const jaVotou: string[] = JSON.parse(localStorage.getItem("cpfs_votaram")||"[]")
+  if(jaVotou.includes(limpo)){ setMsg("Este CPF já votou!"); alert("Este CPF já votou!"); return }
+  localStorage.setItem("cpf_validado",limpo)
+  setCpfValido(true)
+  setMsg("CPF VALIDADO ✅ Agora pode votar!")
+  alert("CPF VALIDADO ✅ Agora clique em VOTAR CPF")
 }
+
+function votar(i:number){
+  if(!cpfValido){ alert("Primeiro VALIDE o CPF na lateral!"); return }
+  const limpo = cpf.replace(/\D/g,"")
+  const jaVotou: string[] = JSON.parse(localStorage.getItem("cpfs_votaram")||"[]")
+  if(jaVotou.includes(limpo)){ alert("Este CPF já votou!"); return }
+  const n=[...votos]; n[i]++; setVotos(n)
+  localStorage.setItem("votos_v21",JSON.stringify(n))
+  jaVotou.push(limpo); localStorage.setItem("cpfs_votaram",JSON.stringify(jaVotou))
+  localStorage.removeItem("cpf_validado")
+  setCpfValido(false); setCpf(""); setMsg(`Voto computado em ${CANDIDATOS_INI[i].name} ✅`)
+  alert(`Voto computado em ${CANDIDATOS_INI[i].name} ✅`)
+}
+
 const total = votos.reduce((a,b)=>a+b,0)
 
 if(!liberado){
 return(
-<div style={{minHeight:"100vh",background:"black",display:"flex",alignItems:"center",justifyContent:"center",padding:20,fontFamily:"system-ui"}}>
-<div style={{background:"white",borderRadius:20,border:"6px solid #facc15",padding:24,maxWidth:400,width:"100%",textAlign:"center"}}>
-<div style={{fontSize:44}}>🔒</div>
-<h1 style={{fontWeight:900,margin:"8px 0"}}>SITE BLOQUEADO</h1>
-<p style={{fontSize:13,fontWeight:700}}>Sua plataforma foi bloqueada. Faça o pagamento para liberar o acesso vitalício.</p>
-
-<div style={{background:"#f1f5f9",border:"3px solid black",borderRadius:12,padding:12,marginTop:14}}>
-<div style={{fontWeight:900,fontSize:12,textAlign:"left"}}>JÁ TENHO CÓDIGO:</div>
-<div style={{display:"flex",gap:6,marginTop:6}}>
-<input
-value={codigoInput}
-onChange={e=>setCodigoInput(e.target.value)}
-placeholder="Digite seu código"
-type="password"
-style={{flex:1,padding:12,border:"3px solid black",borderRadius:8,fontWeight:900,textAlign:"center"}}/>
-<button onClick={liberar} style={{background:"black",color:"#facc15",fontWeight:900,padding:"10px 14px",borderRadius:8,border:"3px solid black",cursor:"pointer"}}>LIBERAR</button>
-</div>
-</div>
-
-<div style={{background:"#fef9c3",border:"3px solid black",borderRadius:12,padding:14,marginTop:12}}>
-<div style={{fontWeight:900,fontSize:16}}>R$97 - ACESSO VITALÍCIO</div>
-<div style={{marginTop:6,fontWeight:800,fontSize:13}}>PIX: {PIX}</div>
-<div style={{fontSize:11,fontWeight:700}}>{NOME}</div>
-<button onClick={()=>{navigator.clipboard.writeText(PIX);alert("PIX COPIADO: "+PIX)}} style={{width:"100%",marginTop:8,background:"white",border:"2px solid black",borderRadius:8,padding:10,fontWeight:900,cursor:"pointer",fontSize:12}}>📋 COPIAR CHAVE PIX</button>
-<a href={`https://wa.me/${ZAP}?text=Olá! Fiz o PIX ${PIX} segue comprovante:`} target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",fontWeight:900,padding:12,borderRadius:8,textDecoration:"none",border:"3px solid black",fontSize:13}}>ENVIAR COMPROVANTE NO WHATSAPP</a>
-</div>
+<div style={{minHeight:"100vh",background:"black",display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+<div style={{background:"white",borderRadius:14,padding:20,maxWidth:360,width:"100%",textAlign:"center",border:"4px solid #facc15"}}>
+<h2 style={{fontWeight:900}}>SITE BLOQUEADO</h2>
+<input value={codigoInput} onChange={e=>setCodigoInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",padding:10,border:"3px solid black",borderRadius:8,fontWeight:900,textAlign:"center",marginTop:10,boxSizing:"border-box"}}/>
+<button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",fontWeight:900,padding:12,borderRadius:8,cursor:"pointer"}}>LIBERAR</button>
 </div>
 </div>
 )
@@ -117,41 +94,45 @@ style={{flex:1,padding:12,border:"3px solid black",borderRadius:8,fontWeight:900
 
 return(
 <div style={{minHeight:"100vh",background:"#f0efe5",fontFamily:"system-ui"}}>
-<div style={{background:"#1a1a1a",color:"#facc15",padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid #facc15"}}>
-<div style={{fontWeight:900,fontSize:13}}>PLATAFORMA ELEITORAL 2026<br/><span style={{fontSize:10,color:"white"}}>V21 • 11 CANDIDATOS • {total} VOTOS</span></div>
+<div style={{background:"#1a1a1a",color:"#facc15",padding:"8px 12px",display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:12,borderBottom:"4px solid #facc15"}}>
+<span>PLATAFORMA ELEITORAL 2026 - V21 • 11 CANDIDATOS • {total} VOTOS</span>
 <div style={{display:"flex",gap:6}}>
-<span style={{background:"#facc15",color:"black",padding:"4px 10px",borderRadius:20,fontSize:9,fontWeight:900,border:"2px solid black"}}>AO VIVO</span>
-<a href="/admin" style={{background:"white",color:"black",padding:"4px 10px",borderRadius:20,fontSize:9,fontWeight:900,textDecoration:"none",border:"2px solid black"}}>ADMIN</a>
-{ehDono && <a href="/admin/vendas" style={{background:"#22c55e",color:"white",padding:"4px 10px",borderRadius:20,fontSize:9,fontWeight:900,textDecoration:"none",border:"2px solid black"}}>VENDAS</a>}
+<span style={{background:"#facc15",color:"black",padding:"3px 8px",borderRadius:12,fontSize:9,border:"2px solid black"}}>AO VIVO</span>
+<a href="/admin" style={{background:"white",color:"black",padding:"3px 8px",borderRadius:12,fontSize:9,textDecoration:"none",border:"2px solid black"}}>ADMIN</a>
+{ehDono && <a href="/admin/vendas" style={{background:"#22c55e",color:"white",padding:"3px 8px",borderRadius:12,fontSize:9,textDecoration:"none",border:"2px solid black"}}>VENDAS</a>}
 </div>
 </div>
 
-<div style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:12,padding:12}}>
+<div style={{display:"grid",gridTemplateColumns:"220px 1fr",gap:10,padding:10}}>
 <div>
-<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10}}>
+<div style={{background:"white",border:"3px solid black",borderRadius:8,padding:8}}>
 <div style={{fontWeight:900,fontSize:11}}>RANKING - {total} VOTOS</div>
-<div style={{border:"2px dashed #cbd5e1",borderRadius:8,padding:20,marginTop:8,textAlign:"center",color:"#3b82f6",fontWeight:700,fontSize:11}}>{total===0?"Nenhum voto ainda":`${total} votos computados`}</div>
+<div style={{border:"2px dashed #cbd5e1",borderRadius:6,padding:12,marginTop:6,textAlign:"center",fontSize:11,fontWeight:700}}>
+{total===0?"Nenhum voto ainda":votos.map((v,i)=>v>0?`${CANDIDATOS_INI[i].name}: ${v} votos (${Math.round(v/total*100)}%)`:"").filter(Boolean).join("\n")}
 </div>
-<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10,marginTop:10}}>
+</div>
+<div style={{background:"white",border:"3px solid black",borderRadius:8,padding:8,marginTop:8}}>
 <div style={{fontWeight:900,fontSize:11}}>VALIDAÇÃO CPF</div>
-<input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:8,padding:8,border:"2px solid black",borderRadius:6,textAlign:"center",boxSizing:"border-box"}}/>
-<button style={{width:"100%",marginTop:6,background:"black",color:"#facc15",fontWeight:900,padding:8,borderRadius:6,border:"2px solid black"}}>VALIDAR CPF</button>
+<input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:6,padding:8,border:"2px solid black",borderRadius:6,textAlign:"center",boxSizing:"border-box"}}/>
+<button onClick={validarCPF} style={{width:"100%",marginTop:6,background:cpfValido?"#16a34a":"black",color:cpfValido?"white":"#facc15",fontWeight:900,padding:8,borderRadius:6,border:"2px solid black",cursor:"pointer",fontSize:11}}>{cpfValido?"CPF VALIDADO ✅":"VALIDAR CPF"}</button>
+{msg && <div style={{fontSize:10,marginTop:6,fontWeight:700,color:cpfValido?"green":"black"}}>{msg}</div>}
 </div>
 </div>
 
-<div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10}}>
-<div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:11}}><span>CANDIDATOS</span><span style={{background:"black",color:"white",padding:"2px 8px",borderRadius:10,fontSize:9}}>{CANDIDATOS_INI.length} CANDIDATOS</span></div>
-<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:10}}>
+<div style={{background:"white",border:"3px solid black",borderRadius:8,padding:8}}>
+<div style={{display:"flex",justifyContent:"space-between",fontWeight:900,fontSize:11}}><span>CANDIDATOS</span><span style={{background:"black",color:"white",padding:"2px 6px",borderRadius:10,fontSize:9}}>{CANDIDATOS_INI.length} CANDIDATOS</span></div>
+<div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginTop:8}}>
 {CANDIDATOS_INI.map((c,i)=>(
-<div key={i} style={{border:"2px solid black",borderRadius:10,padding:8,textAlign:"center"}}>
+<div key={i} style={{border:"2px solid black",borderRadius:8,padding:6,textAlign:"center"}}>
 <img src={c.foto} style={{width:50,height:50,borderRadius:"50%",border:"2px solid black"}}/>
-<div style={{fontWeight:900,fontSize:11,marginTop:4}}>{c.name}</div>
+<div style={{fontWeight:900,fontSize:11,marginTop:2}}>{c.name}</div>
 <div style={{fontSize:8,fontWeight:700}}>{c.part}</div>
-<div style={{background:"#facc15",border:"2px solid black",borderRadius:6,marginTop:4,padding:2,fontSize:9,fontWeight:900}}>{c.part}</div>
-<div style={{fontSize:9,marginTop:2}}>{votos[i]} votos</div>
-<button onClick={()=>votar(i)} style={{width:"100%",marginTop:4,background:"#bfdbfe",border:"2px solid black",borderRadius:6,padding:4,fontSize:9,fontWeight:900,cursor:"pointer"}}>VOTAR CPF</button>
+<div style={{background:"#facc15",border:"1px solid black",borderRadius:4,marginTop:2,padding:2,fontSize:8,fontWeight:900}}>{c.part}</div>
+<div style={{fontSize:9,marginTop:2,fontWeight:700}}>{votos[i]} votos - {total>0?Math.round(votos[i]/total*100):0}%</div>
+<button onClick={()=>votar(i)} style={{width:"100%",marginTop:4,background:cpfValido?"#16a34a":"#bfdbfe",color:cpfValido?"white":"black",border:"2px solid black",borderRadius:6,padding:4,fontSize:9,fontWeight:900,cursor:"pointer"}}>VOTAR CPF</button>
 </div>
 ))}
+</div>
 </div>
 </div>
 </div>
