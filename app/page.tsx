@@ -2,105 +2,17 @@
 import React from "react"
 
 const CAND_DEFAULT = [
-  {
-    nome:"Bolsonaro",
-    part:"PL",
-    num:"22",
-    foto:"https://i.pravatar.cc/150?img=1",
-    cor:"#22c55e",
-    cargo:"Presidente",
-    propostas:["Economia liberal e redução de impostos","Segurança pública e combate ao crime","Defesa da família e valores"]
-  },
-  {
-    nome:"Ciro Gomes",
-    part:"PDT",
-    num:"12",
-    foto:"https://i.pravatar.cc/150?img=2",
-    cor:"#f59e0b",
-    cargo:"Presidente",
-    propostas:["Projeto Nacional de Desenvolvimento","Educação em tempo integral","Indústria brasileira forte"]
-  },
-  {
-    nome:"Eduardo Leite",
-    part:"PSDB",
-    num:"45",
-    foto:"https://i.pravatar.cc/150?img=3",
-    cor:"#3b82f6",
-    cargo:"Presidente",
-    propostas:["Gestão moderna e eficiente","Inclusão e diversidade","Parcerias público-privadas"]
-  },
-  {
-    nome:"Erika Hilton",
-    part:"PSOL",
-    num:"50",
-    foto:"https://i.pravatar.cc/150?img=4",
-    cor:"#ec4899",
-    cargo:"Presidente",
-    propostas:["Direitos LGBTQIA+ e humanos","Educação inclusiva","Combate à desigualdade"]
-  },
-  {
-    nome:"Lula",
-    part:"PT",
-    num:"13",
-    foto:"https://i.pravatar.cc/150?img=5",
-    cor:"#ef4444",
-    cargo:"Presidente",
-    propostas:["Bolsa Família e programas sociais","Emprego, renda e salário forte","Educação e saúde para todos"]
-  },
-  {
-    nome:"Simone Tebet",
-    part:"MDB",
-    num:"15",
-    foto:"https://i.pravatar.cc/150?img=6",
-    cor:"#a855f7",
-    cargo:"Presidente",
-    propostas:["Justiça social e equilíbrio","Educação como prioridade","Agronegócio sustentável"]
-  },
-  {
-    nome:"Marina Silva",
-    part:"REDE",
-    num:"18",
-    foto:"https://i.pravatar.cc/150?img=7",
-    cor:"#14b8a6",
-    cargo:"Presidente",
-    propostas:["Sustentabilidade e Amazônia","Economia verde","Educação ambiental"]
-  },
-  {
-    nome:"Nikolas Ferreira",
-    part:"PL",
-    num:"22",
-    foto:"https://i.pravatar.cc/150?img=8",
-    cor:"#22c55e",
-    cargo:"Presidente",
-    propostas:["Valores conservadores","Liberdade de expressão","Segurança e família"]
-  },
-  {
-    nome:"Tabata Amaral",
-    part:"PSB",
-    num:"40",
-    foto:"https://i.pravatar.cc/150?img=9",
-    cor:"#eab308",
-    cargo:"Presidente",
-    propostas:["Educação pública de qualidade","Inovação e tecnologia","Política baseada em dados"]
-  },
-  {
-    nome:"Romeu Zema",
-    part:"NOVO",
-    num:"30",
-    foto:"https://i.pravatar.cc/150?img=10",
-    cor:"#f97316",
-    cargo:"Presidente",
-    propostas:["Estado eficiente e menos impostos","Empreendedorismo","Gestão empresarial no governo"]
-  },
-  {
-    nome:"Ronaldo Caiado",
-    part:"UNIAO",
-    num:"44",
-    foto:"https://i.pravatar.cc/150?img=11",
-    cor:"#6366f1",
-    cargo:"Presidente",
-    propostas:["Saúde de qualidade","Agronegócio e segurança no campo","Gestão fiscal responsável"]
-  },
+  {nome:"Bolsonaro",part:"PL",num:"22",foto:"https://i.pravatar.cc/150?img=1",cor:"#22c55e",cargo:"Presidente",propostas:["Economia liberal e redução de impostos","Segurança pública e combate ao crime","Defesa da família e valores"]},
+  {nome:"Ciro Gomes",part:"PDT",num:"12",foto:"https://i.pravatar.cc/150?img=2",cor:"#f59e0b",cargo:"Presidente",propostas:["Projeto Nacional de Desenvolvimento","Educação em tempo integral","Indústria brasileira forte"]},
+  {nome:"Eduardo Leite",part:"PSDB",num:"45",foto:"https://i.pravatar.cc/150?img=3",cor:"#3b82f6",cargo:"Presidente",propostas:["Gestão moderna e eficiente","Inclusão e diversidade","Parcerias público-privadas"]},
+  {nome:"Erika Hilton",part:"PSOL",num:"50",foto:"https://i.pravatar.cc/150?img=4",cor:"#ec4899",cargo:"Presidente",propostas:["Direitos LGBTQIA+ e humanos","Educação inclusiva","Combate à desigualdade"]},
+  {nome:"Lula",part:"PT",num:"13",foto:"https://i.pravatar.cc/150?img=5",cor:"#ef4444",cargo:"Presidente",propostas:["Bolsa Família e programas sociais","Emprego, renda e salário forte","Educação e saúde para todos"]},
+  {nome:"Simone Tebet",part:"MDB",num:"15",foto:"https://i.pravatar.cc/150?img=6",cor:"#a855f7",cargo:"Presidente",propostas:["Justiça social e equilíbrio","Educação como prioridade","Agronegócio sustentável"]},
+  {nome:"Marina Silva",part:"REDE",num:"18",foto:"https://i.pravatar.cc/150?img=7",cor:"#14b8a6",cargo:"Presidente",propostas:["Sustentabilidade e Amazônia","Economia verde","Educação ambiental"]},
+  {nome:"Nikolas Ferreira",part:"PL",num:"22",foto:"https://i.pravatar.cc/150?img=8",cor:"#22c55e",cargo:"Presidente",propostas:["Valores conservadores","Liberdade de expressão","Segurança e família"]},
+  {nome:"Tabata Amaral",part:"PSB",num:"40",foto:"https://i.pravatar.cc/150?img=9",cor:"#eab308",cargo:"Presidente",propostas:["Educação pública de qualidade","Inovação e tecnologia","Política baseada em dados"]},
+  {nome:"Romeu Zema",part:"NOVO",num:"30",foto:"https://i.pravatar.cc/150?img=10",cor:"#f97316",cargo:"Presidente",propostas:["Estado eficiente e menos impostos","Empreendedorismo","Gestão empresarial no governo"]},
+  {nome:"Ronaldo Caiado",part:"UNIAO",num:"44",foto:"https://i.pravatar.cc/150?img=11",cor:"#6366f1",cargo:"Presidente",propostas:["Saúde de qualidade","Agronegócio e segurança no campo","Gestão fiscal responsável"]},
 ]
 
 export default function Home(){
@@ -115,27 +27,57 @@ export default function Home(){
 
   React.useEffect(()=>{
     const url=new URL(window.location.href)
+    let codAtualFinal = localStorage.getItem("codigo_liberado") || "GERAL"
+
     if(url.searchParams.get("dono")==="americo"){
       localStorage.setItem("dono_americo","true")
       localStorage.setItem("codigo_liberado","DONO")
+      codAtualFinal = "DONO"
       setCodigoAtual("DONO")
       setLiberado(true)
     }
+
     const c=url.searchParams.get("codigo")
     if(c && c.toUpperCase().startsWith("LIBERADO-")){
       localStorage.setItem("codigo_liberado",c.toUpperCase())
+      codAtualFinal = c.toUpperCase()
       setCodigoAtual(c.toUpperCase())
       setLiberado(true)
     }
+
     const cod=localStorage.getItem("codigo_liberado")
     if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
+      codAtualFinal = cod
       setCodigoAtual(cod)
       setLiberado(true)
     }
 
-    // ISOLADO POR CLIENTE - CADA LIBERADO-XXXX SO VE O DELE
-    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
-    const cc=localStorage.getItem("candidatos_"+codAtual)
+    // CORREÇÃO DO BUG - LÊ DE TODAS AS CHAVES PARA NÃO PERDER A GRAZIELE
+    let cc = null
+    let chaveUsada = ""
+
+    // Tenta achar onde tá a graziele - olha em todas as chaves possíveis
+    const chavesParaTentar = [
+      "candidatos_"+codAtualFinal,
+      "candidatos_DONO",
+      "candidatos_"+cod,
+      "candidatos_v21",
+      "candidatos_GERAL"
+    ]
+
+    for(const chave of chavesParaTentar){
+      const tentativa = localStorage.getItem(chave)
+      if(tentativa){
+        try{
+          const lista = JSON.parse(tentativa)
+          if(lista && lista.length > 0){
+            cc = tentativa
+            chaveUsada = chave
+            break
+          }
+        }catch(e){}
+      }
+    }
 
     if(cc){
       try{
@@ -151,24 +93,37 @@ export default function Home(){
         }))
         if(convertidos.length>0){
           setCAND(convertidos)
-          const v=localStorage.getItem("votos_"+codAtual)
+          // Salva na chave correta isolada pra garantir que vai aparecer sempre
+          if(chaveUsada!== "candidatos_"+codAtualFinal){
+            localStorage.setItem("candidatos_"+codAtualFinal, JSON.stringify(listaAdmin))
+          }
+          const v=localStorage.getItem("votos_"+codAtualFinal) || localStorage.getItem("votos_v21") || localStorage.getItem("votos_DONO")
           if(v){
-            setVotos(JSON.parse(v))
+            try{
+              const votosSalvos = JSON.parse(v)
+              if(votosSalvos.length === convertidos.length){
+                setVotos(votosSalvos)
+              } else {
+                setVotos(Array(convertidos.length).fill(0))
+              }
+            }catch{
+              setVotos(Array(convertidos.length).fill(0))
+            }
           } else {
             setVotos(Array(convertidos.length).fill(0))
           }
         }
       }catch(e){
-        console.log("erro ler admin isolado",e)
+        console.log("erro ler admin",e)
       }
     } else {
-      const v=localStorage.getItem("votos_"+codAtual)
+      const v=localStorage.getItem("votos_"+codAtualFinal)
       if(v){
         setVotos(JSON.parse(v))
       }
     }
 
-    const cv=localStorage.getItem("cpf_validado_"+codAtual)
+    const cv=localStorage.getItem("cpf_validado_"+codAtualFinal)
     if(cv){
       setCpf(cv)
       setCpfOk(true)
@@ -230,7 +185,7 @@ export default function Home(){
   const total=votos.reduce((a,b)=>a+b,0)
 
   const ranking=CAND.map((c,i)=>({
-   ...c,
+  ...c,
     v:votos[i]||0,
     pct:total>0?Math.round((votos[i]||0)/total*100):0
   })).sort((a,b)=>b.v-a.v)
