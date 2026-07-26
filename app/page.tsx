@@ -28,24 +28,47 @@ const [votos,setVotos]=React.useState<number[]>(Array(11).fill(0))
 
 React.useEffect(()=>{
   const url = new URL(window.location.href)
+  const bloqueados: string[] = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
+
+  // DONA
   if(url.searchParams.get("dono")==="americo"){
     localStorage.setItem("dono_americo","true")
     localStorage.setItem("codigo_liberado","DONO")
     setLiberado(true); setEhDono(true); return
   }
+  // LINK COM CODIGO
   const codigoUrl = url.searchParams.get("codigo")
   if(codigoUrl && codigoUrl.startsWith("LIBERADO-")){
+    if(bloqueados.includes(codigoUrl)){
+      alert("Este código foi CANCELADO!")
+      setLiberado(false); return
+    }
     localStorage.setItem("codigo_liberado",codigoUrl)
     setLiberado(true); return
   }
+
   if(localStorage.getItem("dono_americo")==="true") setEhDono(true)
+
   const cod = localStorage.getItem("codigo_liberado")
+  // VERIFICA SE FOI CANCELADO EM VENDAS
+  if(cod && bloqueados.includes(cod)){
+    localStorage.removeItem("codigo_liberado")
+    setLiberado(false)
+    return
+  }
+
   if(cod && (cod.startsWith("LIBERADO-") || cod==="DONO")) setLiberado(true)
+
   const v = localStorage.getItem("votos_v21")
   if(v) setVotos(JSON.parse(v))
 },[])
 
 function liberar(){
+  const bloqueados: string[] = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
+  if(bloqueados.includes(codigoInput)){
+    alert("Este código foi CANCELADO! Fale com o suporte.")
+    return
+  }
   if(!codigoInput.startsWith("LIBERADO-")){
     alert("Código inválido! Peça seu código no WhatsApp após o pagamento.")
     return
@@ -53,6 +76,7 @@ function liberar(){
   localStorage.setItem("codigo_liberado",codigoInput)
   setLiberado(true)
 }
+
 function votar(i:number){
   const n=[...votos]; n[i]++; setVotos(n); localStorage.setItem("votos_v21",JSON.stringify(n))
 }
@@ -66,7 +90,6 @@ return(
 <h1 style={{fontWeight:900,margin:"8px 0"}}>SITE BLOQUEADO</h1>
 <p style={{fontSize:13,fontWeight:700}}>Sua plataforma foi bloqueada. Faça o pagamento para liberar o acesso vitalício.</p>
 
-{/* CAMPO DE CÓDIGO SEM MOSTRAR A SENHA */}
 <div style={{background:"#f1f5f9",border:"3px solid black",borderRadius:12,padding:12,marginTop:14}}>
 <div style={{fontWeight:900,fontSize:12,textAlign:"left"}}>JÁ TENHO CÓDIGO:</div>
 <div style={{display:"flex",gap:6,marginTop:6}}>
