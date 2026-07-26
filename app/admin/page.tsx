@@ -118,7 +118,6 @@ return(
 <div style={{background:"white",border:"3px solid black",borderRadius:10,padding:10}}>
 <div style={{fontWeight:900,fontSize:10}}>{ehDono?"SUA SENHA DE DONA":"SEU ACESSO"}</div>
 <div style={{marginTop:6,fontSize:12,background:"#f1f5f9",border:"2px solid black",padding:8,borderRadius:6,fontWeight:900,textAlign:"center"}}>{typeof window!=="undefined"?localStorage.getItem("codigo_liberado"):""}</div>
-{!ehDono && <div style={{fontSize:9,marginTop:6,color:"#16a34a",fontWeight:700}}>Você está como CLIENTE. Só a dona vê VENDAS.</div>}
 </div>
 </div>
 </div>
