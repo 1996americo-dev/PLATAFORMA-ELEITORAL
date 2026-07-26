@@ -144,10 +144,7 @@ export default function Home(){
             {cpfOk && <div style={{background:"#dcfce7",color:"#166534",padding:6,borderRadius:6,fontSize:10,marginTop:6,textAlign:"center",fontWeight:700}}>Liberado! Escolha um candidato →</div>}
           </div>
 
-          <div style={{background:"#0f172a",borderRadius:12,padding:12,color:"white",fontSize:10}}>
-            <div style={{fontWeight:800}}>PIX OFICIAL: 6291796690</div>
-            <div style={{opacity:0.7,marginTop:2}}>Suporte: WhatsApp 62 9179-6690</div>
-          </div>
+          
         </div>
 
         <div>
