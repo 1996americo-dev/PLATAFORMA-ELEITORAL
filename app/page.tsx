@@ -107,6 +107,7 @@ export default function Home(){
   const [CAND,setCAND]=React.useState(CAND_DEFAULT)
   const [liberado,setLiberado]=React.useState(false)
   const [codInput,setCodInput]=React.useState("")
+  const [codigoAtual,setCodigoAtual]=React.useState("")
   const [cpf,setCpf]=React.useState("")
   const [cpfOk,setCpfOk]=React.useState(false)
   const [votos,setVotos]=React.useState<number[]>(Array(CAND_DEFAULT.length).fill(0))
@@ -117,20 +118,25 @@ export default function Home(){
     if(url.searchParams.get("dono")==="americo"){
       localStorage.setItem("dono_americo","true")
       localStorage.setItem("codigo_liberado","DONO")
+      setCodigoAtual("DONO")
       setLiberado(true)
     }
     const c=url.searchParams.get("codigo")
     if(c && c.toUpperCase().startsWith("LIBERADO-")){
       localStorage.setItem("codigo_liberado",c.toUpperCase())
+      setCodigoAtual(c.toUpperCase())
       setLiberado(true)
     }
     const cod=localStorage.getItem("codigo_liberado")
     if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
+      setCodigoAtual(cod)
       setLiberado(true)
     }
 
-    // CORREÇÃO DO BUG - LÊ DO ADMIN
-    const cc=localStorage.getItem("candidatos_v21")
+    // ISOLADO POR CLIENTE - CADA LIBERADO-XXXX SO VE O DELE
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    const cc=localStorage.getItem("candidatos_"+codAtual)
+
     if(cc){
       try{
         const listaAdmin=JSON.parse(cc)
@@ -145,7 +151,7 @@ export default function Home(){
         }))
         if(convertidos.length>0){
           setCAND(convertidos)
-          const v=localStorage.getItem("votos_v21")
+          const v=localStorage.getItem("votos_"+codAtual)
           if(v){
             setVotos(JSON.parse(v))
           } else {
@@ -153,16 +159,16 @@ export default function Home(){
           }
         }
       }catch(e){
-        console.log("erro ler admin",e)
+        console.log("erro ler admin isolado",e)
       }
     } else {
-      const v=localStorage.getItem("votos_v21")
+      const v=localStorage.getItem("votos_"+codAtual)
       if(v){
         setVotos(JSON.parse(v))
       }
     }
 
-    const cv=localStorage.getItem("cpf_validado")
+    const cv=localStorage.getItem("cpf_validado_"+codAtual)
     if(cv){
       setCpf(cv)
       setCpfOk(true)
@@ -176,7 +182,9 @@ export default function Home(){
       return
     }
     localStorage.setItem("codigo_liberado",cod)
+    setCodigoAtual(cod)
     setLiberado(true)
+    window.location.reload()
   }
 
   function validarCPF(){
@@ -185,12 +193,13 @@ export default function Home(){
       alert("11 numeros")
       return
     }
-    const ja:string[]=JSON.parse(localStorage.getItem("cpfs_votaram")||"[]")
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    const ja:string[]=JSON.parse(localStorage.getItem("cpfs_votaram_"+codAtual)||"[]")
     if(ja.includes(limpo)){
-      alert("Ja votou")
+      alert("Ja votou neste cliente")
       return
     }
-    localStorage.setItem("cpf_validado",limpo)
+    localStorage.setItem("cpf_validado_"+codAtual,limpo)
     setCpfOk(true)
   }
 
@@ -200,18 +209,19 @@ export default function Home(){
       return
     }
     const limpo=cpf.replace(/\D/g,"")
-    const ja:string[]=JSON.parse(localStorage.getItem("cpfs_votaram")||"[]")
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    const ja:string[]=JSON.parse(localStorage.getItem("cpfs_votaram_"+codAtual)||"[]")
     if(ja.includes(limpo)){
-      alert("Ja votou")
+      alert("Ja votou neste cliente")
       return
     }
     const n=[...votos]
     n[i]++
     setVotos(n)
-    localStorage.setItem("votos_v21",JSON.stringify(n))
+    localStorage.setItem("votos_"+codAtual,JSON.stringify(n))
     ja.push(limpo)
-    localStorage.setItem("cpfs_votaram",JSON.stringify(ja))
-    localStorage.removeItem("cpf_validado")
+    localStorage.setItem("cpfs_votaram_"+codAtual,JSON.stringify(ja))
+    localStorage.removeItem("cpf_validado_"+codAtual)
     setCpfOk(false)
     setCpf("")
     setVotoSel(null)
@@ -253,8 +263,8 @@ export default function Home(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>26</div>
           <div>
-            <div style={{fontWeight:900,fontSize:13}}>PLATAFORMA ELEITORAL 2026</div>
-            <div style={{fontSize:10,opacity:0.7}}>{total} VOTOS COMPUTADOS • {CAND.length} CANDIDATOS</div>
+            <div style={{fontWeight:900,fontSize:13}}>PLATAFORMA ELEITORAL 2026 - {codigoAtual}</div>
+            <div style={{fontSize:10,opacity:0.7}}>{total} VOTOS COMPUTADOS • {CAND.length} CANDIDATOS • Cliente: {codigoAtual}</div>
           </div>
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -267,16 +277,16 @@ export default function Home(){
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
             <div style={{fontWeight:900,fontSize:12,display:"flex",justifyContent:"space-between"}}>
-              <span>🏆 RANKING ATUAL</span>
+              <span>🏆 RANKING - {codigoAtual}</span>
               <span style={{background:"#0f172a",color:"white",padding:"2px 8px",borderRadius:10,fontSize:10}}>{total} VOTOS</span>
             </div>
             <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:6}}>
-              {total===0?<div style={{textAlign:"center",padding:20,color:"#94a3b8",fontSize:12}}>Nenhum voto ainda</div>:ranking.filter(r=>r.v>0).map((r,i)=><div key={i} style={{border:i===0?"2px solid #facc15":"1px solid #e2e8f0",borderRadius:10,padding:8,background:i===0?"#fefce8":"white"}}><div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:800}}><span>{i+1}º {r.nome}</span><span>{r.pct}%</span></div><div style={{fontSize:10,color:"#64748b"}}>{r.part} - {r.num} • {r.v} votos • {r.cargo}</div><div style={{height:6,background:"#e2e8f0",borderRadius:10,marginTop:4}}><div style={{width:`${r.pct}%`,height:"100%",background:i===0?"#eab308":"#0f172a"}}></div></div></div>)}
+              {total===0?<div style={{textAlign:"center",padding:20,color:"#94a3b8",fontSize:12}}>Nenhum voto ainda<br/>Cliente {codigoAtual}</div>:ranking.filter(r=>r.v>0).map((r,i)=><div key={i} style={{border:i===0?"2px solid #facc15":"1px solid #e2e8f0",borderRadius:10,padding:8,background:i===0?"#fefce8":"white"}}><div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:800}}><span>{i+1}º {r.nome}</span><span>{r.pct}%</span></div><div style={{fontSize:10,color:"#64748b"}}>{r.part} - {r.num} • {r.v} votos • {r.cargo}</div><div style={{height:6,background:"#e2e8f0",borderRadius:10,marginTop:4}}><div style={{width:`${r.pct}%`,height:"100%",background:i===0?"#eab308":"#0f172a"}}></div></div></div>)}
             </div>
           </div>
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
-            <div style={{fontWeight:900,fontSize:12}}>🛡️ VALIDAÇÃO CPF</div>
-            <div style={{fontSize:10,color:"#64748b",marginTop:2}}>1 CPF = 1 Voto</div>
+            <div style={{fontWeight:900,fontSize:12}}>🛡️ VALIDAÇÃO CPF - {codigoAtual}</div>
+            <div style={{fontSize:10,color:"#64748b",marginTop:2}}>1 CPF = 1 Voto neste cliente</div>
             <input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:10,padding:10,border:cpfOk?"2px solid #22c55e":"2px solid #e2e8f0",borderRadius:8,boxSizing:"border-box",textAlign:"center",fontWeight:700}}/>
             <button onClick={validarCPF} style={{width:"100%",marginTop:8,background:cpfOk?"#22c55e":"#0f172a",color:"white",padding:10,borderRadius:8,fontWeight:900,fontSize:12,border:"none"}}>{cpfOk?"✅ VALIDADO - PODE VOTAR":"VALIDAR CPF"}</button>
           </div>
@@ -285,7 +295,7 @@ export default function Home(){
         <div>
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
             <div style={{display:"flex",justifyContent:"space-between"}}>
-              <div style={{fontWeight:900,fontSize:14}}>CANDIDATOS 2026</div>
+              <div style={{fontWeight:900,fontSize:14}}>CANDIDATOS 2026 - {codigoAtual}</div>
               <div style={{fontSize:10,background:"#f1f5f9",padding:"4px 10px",borderRadius:20}}>{CAND.length} candidatos</div>
             </div>
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12,marginTop:14}}>
