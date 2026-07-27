@@ -35,7 +35,7 @@ export default function Home(){
         localStorage.setItem("dono_americo","true")
         localStorage.setItem("codigo_liberado","DONO")
         codAtualFinal = "DONO"
-        setCodigoAtual("DONO")
+        setCodigoAtual("")
         setLiberado(true)
       }
       const c=url.searchParams.get("codigo")
@@ -48,10 +48,9 @@ export default function Home(){
       const cod=localStorage.getItem("codigo_liberado")
       if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
         codAtualFinal = cod
-        setCodigoAtual(cod)
+        setCodigoAtual(cod==="DONO"?"":cod)
         setLiberado(true)
       }
-      // BLOQUEIO REAL - SE BLOQUEADO NÃO MOSTRA MAIS NADA
       try{
         const mod = await import("@/lib/supabase")
         const { data } = await mod.supabase.from("bloqueados").select("codigo").eq("codigo", codAtualFinal).maybeSingle()
@@ -65,7 +64,6 @@ export default function Home(){
           return
         }
       }catch(e){}
-
       let cc = null
       let chaveUsada = ""
       const chavesParaTentar = ["candidatos_"+codAtualFinal,"candidatos_DONO","candidatos_v21","candidatos_GERAL"]
@@ -112,14 +110,11 @@ export default function Home(){
   function liberar(){
     const cod=codInput.toUpperCase().trim()
     if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){ alert("Use LIBERADO-XXXX"); return }
-    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
-    if(bloqueados.includes(cod)){ alert("⛔ Código cancelado/bloqueado!"); return }
     localStorage.setItem("codigo_liberado",cod)
-    setCodigoAtual(cod)
+    setCodigoAtual(cod==="DONO"?"":cod)
     setLiberado(true)
     window.location.reload()
   }
-
   function validarCPF(){
     const limpo=cpf.replace(/\D/g,"")
     if(limpo.length!==11){ alert("11 numeros"); return }
@@ -129,7 +124,6 @@ export default function Home(){
     localStorage.setItem("cpf_validado_"+codAtual,limpo)
     setCpfOk(true)
   }
-
   function votar(i:number){
     if(!cpfOk){ alert("Valide CPF lateral"); return }
     const limpo=cpf.replace(/\D/g,"")
@@ -156,8 +150,8 @@ export default function Home(){
           <h1 style={{fontWeight:900,fontSize:22,marginTop:16,color:"#dc2626"}}>ACESSO CANCELADO</h1>
           <p style={{fontSize:13,color:"#475569",marginTop:8}}>Este código foi <b>bloqueado pelo administrador</b></p>
           <div style={{background:"#fef2f2",border:"1px solid #fecaca",borderRadius:10,padding:10,marginTop:14,fontSize:12,fontWeight:800,color:"#991b1b"}}>{codigoBloq}</div>
-          <p style={{fontSize:12,color:"#64748b",marginTop:12}}>Entre em contato para regularizar seu acesso</p>
-          <a href="https://wa.me/556291796690" target="_blank" style={{display:"block",marginTop:14,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none"}}>FALAR NO WHATSAPP</a>
+          <p style={{fontSize:12,color:"#64748b",marginTop:12}}>Entre em contato para regularizar</p>
+          <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:14,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none"}}>FALAR NO WHATSAPP</a>
         </div>
       </div>
     )
@@ -174,12 +168,12 @@ export default function Home(){
           </div>
           <div style={{background:"#f8fafc",border:"1.5px solid #e2e8f0",borderRadius:12,padding:12,marginTop:16}}>
             <div style={{fontWeight:800,fontSize:12}}>💰 LIBERAÇÃO IMEDIATA</div>
-            <div style={{fontSize:13,marginTop:6}}>PIX: <b>6291796690</b></div>
-            <div style={{fontSize:12}}>Valor: <b>R$ 49,90</b></div>
+            <div style={{fontSize:13,marginTop:6}}>PIX: <b>62981796690</b></div>
+            <div style={{fontSize:12}}>Valor: <b>R$ 97,90</b></div>
           </div>
           <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:12,padding:12,border:"2px solid #0f172a",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:8,background:"#0f172a",color:"white",padding:12,borderRadius:10,fontWeight:900}}>LIBERAR ACESSO →</button>
-          <a href="https://wa.me/556291796690" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center"}}>WHATSAPP 62 9179-6690</a>
+          <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center"}}>WHATSAPP 62 98179-6690</a>
         </div>
       </div>
     )
@@ -191,60 +185,67 @@ export default function Home(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>26</div>
           <div>
-            <div style={{fontWeight:900,fontSize:13}}>PLATAFORMA ELEITORAL 2026 - {codigoAtual}</div>
-            <div style={{fontSize:10,opacity:0.7}}>{total} VOTOS COMPUTADOS • {CAND.length} CANDIDATOS • Cliente: {codigoAtual}</div>
+            <div style={{fontWeight:900,fontSize:13}}>PLATAFORMA ELEITORAL 2026{codigoAtual?` - ${codigoAtual}`:""}</div>
+            <div style={{fontSize:10,opacity:0.7}}>{total} VOTOS • {CAND.length} CANDIDATOS{codigoAtual?` • Cliente: ${codigoAtual}`:""}</div>
           </div>
         </div>
-        <div style={{display:"flex",gap:8,alignItems:"center"}}>
+        <div style={{display:"flex",gap:8}}>
           <span style={{background:"#22c55e",padding:"4px 10px",borderRadius:20,fontSize:10,fontWeight:900}}>● AO VIVO</span>
           <a href="/admin?dono=americo" style={{background:"white",color:"black",padding:"6px 12px",borderRadius:8,fontSize:11,textDecoration:"none",fontWeight:800}}>ADMIN</a>
         </div>
       </div>
+
       <div style={{display:"grid",gridTemplateColumns:"300px 1fr",gap:16,padding:16,maxWidth:1400,margin:"0 auto"}}>
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
             <div style={{fontWeight:900,fontSize:12,display:"flex",justifyContent:"space-between"}}>
-              <span>🏆 RANKING - {codigoAtual}</span>
+              <span>🏆 RANKING{codigoAtual?` - ${codigoAtual}`:""}</span>
               <span style={{background:"#0f172a",color:"white",padding:"2px 8px",borderRadius:10,fontSize:10}}>{total} VOTOS</span>
             </div>
             <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:6}}>
-              {total===0?<div style={{textAlign:"center",padding:20,color:"#94a3b8",fontSize:12}}>Nenhum voto ainda<br/>Cliente {codigoAtual}</div>:ranking.filter(r=>r.v>0).map((r,i)=><div key={i} style={{border:i===0?"2px solid #facc15":"1px solid #e2e8f0",borderRadius:10,padding:8,background:i===0?"#fefce8":"white"}}><div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:800}}><span>{i+1}º {r.nome}</span><span>{r.pct}%</span></div><div style={{fontSize:10,color:"#64748b"}}>{r.part} - {r.num} • {r.v} votos • {r.cargo}</div><div style={{height:6,background:"#e2e8f0",borderRadius:10,marginTop:4}}><div style={{width:`${r.pct}%`,height:"100%",background:i===0?"#eab308":"#0f172a"}}></div></div></div>)}
+              {total===0?<div style={{textAlign:"center",padding:20,color:"#94a3b8",fontSize:12}}>Nenhum voto ainda</div>:ranking.filter(r=>r.v>0).map((r,i)=>(
+                <div key={i} style={{border:i===0?"2px solid #facc15":"1px solid #e2e8f0",borderRadius:10,padding:8,background:i===0?"#fefce8":"white"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",fontSize:11,fontWeight:800}}><span>{i+1}º {r.nome}</span><span>{r.pct}%</span></div>
+                  <div style={{fontSize:10,color:"#64748b"}}>{r.part} - {r.num} • {r.v} votos • {r.cargo}</div>
+                  <div style={{height:6,background:"#e2e8f0",borderRadius:10,marginTop:4}}><div style={{width:`${r.pct}%`,height:"100%",background:i===0?"#eab308":"#0f172a"}}></div></div>
+                </div>
+              ))}
             </div>
           </div>
+
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
-            <div style={{fontWeight:900,fontSize:12}}>🛡 VALIDAÇÃO CPF - {codigoAtual}</div>
+            <div style={{fontWeight:900,fontSize:12}}>🛡 VALIDAÇÃO CPF{codigoAtual?` - ${codigoAtual}`:""}</div>
             <div style={{fontSize:10,color:"#64748b",marginTop:2}}>1 CPF = 1 Voto neste cliente</div>
             <input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:10,padding:10,border:cpfOk?"2px solid #22c55e":"2px solid #e2e8f0",borderRadius:8,boxSizing:"border-box",textAlign:"center",fontWeight:700}}/>
             <button onClick={validarCPF} style={{width:"100%",marginTop:8,background:cpfOk?"#22c55e":"#0f172a",color:"white",padding:10,borderRadius:8,fontWeight:900,fontSize:12,border:"none"}}>{cpfOk?"✅ VALIDADO - PODE VOTAR":"VALIDAR CPF"}</button>
           </div>
         </div>
-        <div>
-          <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
-            <div style={{display:"flex",justifyContent:"space-between"}}>
-              <div style={{fontWeight:900,fontSize:14}}>CANDIDATOS 2026 - {codigoAtual}</div>
-              <div style={{fontSize:10,background:"#f1f5f9",padding:"4px 10px",borderRadius:20}}>{CAND.length} candidatos</div>
-            </div>
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12,marginTop:14}}>
-              {CAND.map((c,i)=>(
-                <div key={i} onClick={()=>setVotoSel(i)} style={{border:votoSel===i?"2px solid #0f172a":"1.5px solid #e2e8f0",borderRadius:14,padding:12,textAlign:"center",cursor:"pointer",background:votoSel===i?"#f8fafc":"white"}}>
-                  <div style={{position:"relative",display:"inline-block"}}>
-                    <img src={c.foto} alt="" style={{width:64,height:64,borderRadius:"50%",border:`3px solid ${c.cor}`}}/>
-                    <div style={{position:"absolute",bottom:-4,right:-4,background:c.cor,color:"white",width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,border:"2px solid white"}}>{c.num}</div>
-                  </div>
-                  <div style={{fontWeight:900,fontSize:13,marginTop:8}}>{c.nome}</div>
-                  <div style={{fontSize:10,color:"#64748b"}}>{c.part} • Nº {c.num} • {c.cargo}</div>
-                  <div style={{marginTop:8,background:"#f8fafc",borderRadius:8,padding:8,textAlign:"left"}}>
-                    <div style={{fontSize:9,fontWeight:900,color:"#0f172a"}}>📋 PROPOSTAS:</div>
-                    {c.propostas.map((p:any,j:number)=><div key={j} style={{fontSize:9,marginTop:3,lineHeight:"13px"}}>• {p}</div>)}
-                  </div>
-                  <div style={{marginTop:8,display:"flex",justifyContent:"space-between",fontSize:10,background:"#f1f5f9",padding:"4px 8px",borderRadius:6}}>
-                    <span>{votos[i]||0} votos</span>
-                    <b>{total>0?Math.round((votos[i]||0)/total*100):0}%</b>
-                  </div>
-                  <button onClick={(e)=>{e.stopPropagation();votar(i)}} style={{width:"100%",marginTop:8,background:votoSel===i?"#0f172a":"white",color:votoSel===i?"white":"#0f172a",border:"1.5px solid #0f172a",borderRadius:8,padding:"7px 0",fontSize:11,fontWeight:900}}>VOTAR {c.nome.split(" ")[0].toUpperCase()}</button>
+
+        <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
+          <div style={{display:"flex",justifyContent:"space-between"}}>
+            <div style={{fontWeight:900,fontSize:14}}>CANDIDATOS 2026{codigoAtual?` - ${codigoAtual}`:""}</div>
+            <div style={{fontSize:10,background:"#f1f5f9",padding:"4px 10px",borderRadius:20}}>{CAND.length} candidatos</div>
+          </div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12,marginTop:14}}>
+            {CAND.map((c,i)=>(
+              <div key={i} onClick={()=>setVotoSel(i)} style={{border:votoSel===i?"2px solid #0f172a":"1.5px solid #e2e8f0",borderRadius:14,padding:12,textAlign:"center",cursor:"pointer",background:votoSel===i?"#f8fafc":"white"}}>
+                <div style={{position:"relative",display:"inline-block"}}>
+                  <img src={c.foto} alt="" style={{width:64,height:64,borderRadius:"50%",border:`3px solid ${c.cor}`}}/>
+                  <div style={{position:"absolute",bottom:-4,right:-4,background:c.cor,color:"white",width:22,height:22,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:900,border:"2px solid white"}}>{c.num}</div>
                 </div>
-              ))}
-            </div>
+                <div style={{fontWeight:900,fontSize:13,marginTop:8}}>{c.nome}</div>
+                <div style={{fontSize:10,color:"#64748b"}}>{c.part} • Nº {c.num} • {c.cargo}</div>
+                <div style={{marginTop:8,background:"#f8fafc",borderRadius:8,padding:8,textAlign:"left"}}>
+                  <div style={{fontSize:9,fontWeight:900,color:"#0f172a"}}>📋 PROPOSTAS:</div>
+                  {c.propostas.map((p:any,j:number)=><div key={j} style={{fontSize:9,marginTop:3,lineHeight:"13px"}}>• {p}</div>)}
+                </div>
+                <div style={{marginTop:8,display:"flex",justifyContent:"space-between",fontSize:10,background:"#f1f5f9",padding:"4px 8px",borderRadius:6}}>
+                  <span>{votos[i]||0} votos</span>
+                  <b>{total>0?Math.round((votos[i]||0)/total*100):0}%</b>
+                </div>
+                <button onClick={(e)=>{e.stopPropagation();votar(i)}} style={{width:"100%",marginTop:8,background:votoSel===i?"#0f172a":"white",color:votoSel===i?"white":"#0f172a",border:"1.5px solid #0f172a",borderRadius:8,padding:"7px 0",fontSize:11,fontWeight:900}}>VOTAR {c.nome.split(" ")[0].toUpperCase()}</button>
+              </div>
+            ))}
           </div>
         </div>
       </div>
