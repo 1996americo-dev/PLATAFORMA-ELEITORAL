@@ -17,13 +17,8 @@ export default function AdminPage(){
   const fileRef=React.useRef<HTMLInputElement>(null)
 
   React.useEffect(()=>{
-    // SÓ LIBERA SE JÁ DIGITOU SENHA ANTES - SEM AUTO LOGIN POR URL
-    const cod=localStorage.getItem("codigo_liberado")
-    if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
-      setCodigoAtual(cod)
-      setLiberado(true)
-    }
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    if(codAtual) setCodigoAtual(codAtual)
     const cc=localStorage.getItem("candidatos_"+codAtual)
     const v=localStorage.getItem("votos_"+codAtual)
     if(cc){
@@ -52,14 +47,11 @@ export default function AdminPage(){
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    // AGORA PRECISA DIGITAR SENHA - NÃO ENTRA MAIS DIRETO
     if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
       alert("Senha inválida! Use DONO ou LIBERADO-XXXX");return
     }
-    localStorage.setItem("codigo_liberado",cod)
     setCodigoAtual(cod)
     setLiberado(true)
-    window.location.reload()
   }
 
   function handleFoto(e:any){
@@ -110,11 +102,10 @@ export default function AdminPage(){
             <div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div>
             <h1 style={{fontWeight:900, marginTop:12, fontSize:18}}>ADMIN BLOQUEADO</h1>
             <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Digite a senha para entrar</p>
-            <p style={{fontSize:10,color:"#64748b", marginTop:6}}>Apenas o dono tem acesso</p>
+            <p style={{fontSize:10,color:"#64748b", marginTop:6}}>Mesma senha do site: DONO ou LIBERADO-XXXX</p>
           </div>
           <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA DO ADMIN" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>ENTRAR NO ADMIN →</button>
-          <p style={{fontSize:9,color:"#94a3b8",textAlign:"center",marginTop:10, fontWeight:700}}>Senha padrão: DONO | Clientes: LIBERADO-XXXX</p>
           <a href="/" style={{display:"block", marginTop:10, textAlign:"center", fontSize:11, fontWeight:800, color:"#000"}}>← Voltar ao site</a>
         </div>
       </div>
@@ -134,42 +125,23 @@ export default function AdminPage(){
         </div>
         <div style={{display:"flex",gap:8}}>
           <a href="/" className="no-print" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
-          <a href="/admin/vendas?dono=americo" className="no-print" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>
-          <button onClick={()=>{localStorage.removeItem("codigo_liberado"); window.location.href="/"}} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
+          <button onClick={()=>setLiberado(false)} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
         </div>
       </div>
-
       <div style={{maxWidth:1200,margin:"0 auto",padding:16,display:"flex",flexDirection:"column",gap:16}}>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}} className="no-print">
-          <div style={{background:"white",borderRadius:14,padding:16,border:"4px solid black",display:"flex",justifyContent:"space-between",alignItems:"center", boxShadow:"6px 6px 0px #000"}}>
-            <div><div style={{fontSize:10,fontWeight:900, background:"black", color:"#facc15", padding:"4px 8px", borderRadius:6, display:"inline-block"}}>TOTAL VOTOS</div><div style={{fontSize:26,fontWeight:900, marginTop:6}}>{total}</div></div>
-            <div style={{background:"#dcfce7",width:50,height:50,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>📊</div>
-          </div>
-          <div style={{background:"white",borderRadius:14,padding:16,border:"4px solid black",display:"flex",justifyContent:"space-between",alignItems:"center", boxShadow:"6px 6px 0px #000"}}>
-            <div><div style={{fontSize:10,fontWeight:900, background:"black", color:"white", padding:"4px 8px", borderRadius:6, display:"inline-block"}}>CANDIDATOS</div><div style={{fontSize:26,fontWeight:900, marginTop:6}}>{candidatos.length}</div></div>
-            <div style={{background:"#fef9c3",width:50,height:50,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>👥</div>
-          </div>
-          <div style={{background:"black",borderRadius:14,padding:16,border:"4px solid black",display:"flex",justifyContent:"space-between",alignItems:"center", boxShadow:"6px 6px 0px #000", color:"white"}}>
-            <div><div style={{fontSize:10,fontWeight:900, background:"#facc15", color:"black", padding:"4px 8px", borderRadius:6, display:"inline-block"}}>LÍDER ATUAL</div><div style={{fontSize:16,fontWeight:900, marginTop:6, color:"#facc15"}}>{total>0?ranking[0]?.nome:"-"} {total>0?`• ${ranking[0]?.pct}%`:""}</div></div>
-            <div style={{background:"#facc15",color:"black",width:50,height:50,borderRadius:12,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,border:"3px solid white", boxShadow:"3px 3px 0px #fff"}}>🏆</div>
-          </div>
-        </div>
-
         <div style={{background:"white",borderRadius:16,border:"4px solid black",overflow:"hidden", boxShadow:"6px 6px 0px #000"}}>
           <div style={{padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid black",background:"#f8fafc"}}>
             <div style={{fontWeight:900,fontSize:14, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, border:"3px solid black"}}>🏆 RANKING - {total} VOTOS</div>
-            <button onClick={()=>window.print()} className="no-print" style={{background:"black",color:"#facc15",border:"3px solid black",padding:"8px 16px",borderRadius:10,fontWeight:900,fontSize:12,cursor:"pointer", boxShadow:"3px 3px 0px #000"}}>🖨 IMPRIMIR</button>
           </div>
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",fontSize:12,borderCollapse:"collapse"}}>
               <thead><tr style={{background:"black",color:"#facc15",textAlign:"left",fontSize:11, fontWeight:900}}><th style={{padding:"12px 14px"}}>#</th><th style={{padding:"12px 14px"}}>CANDIDATO</th><th style={{padding:"12px 14px"}}>PARTIDO</th><th style={{padding:"12px 14px"}}>Nº</th><th style={{padding:"12px 14px"}}>VOTOS</th><th style={{padding:"12px 14px"}}>%</th><th style={{padding:"12px 14px"}}>BARRA</th></tr></thead>
               <tbody>
-                {total===0?<tr><td colSpan={7} style={{padding:24,textAlign:"center",fontWeight:900, fontSize:13}}>Nenhum voto ainda - compartilhe o link</td></tr>:ranking.map((r,i)=><tr key={i} style={{borderTop:"3px solid black",background:i===0?"#fef9c3":"white"}}><td style={{padding:"12px 14px",fontWeight:900}}>{i+1}º</td><td style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><img src={r.foto} style={{width:34,height:34,borderRadius:"50%",border:"3px solid black"}}/><b style={{fontSize:13}}>{r.nome}</b></td><td style={{padding:"12px 14px",fontWeight:800}}>{r.partido}</td><td style={{padding:"12px 14px"}}><span style={{background:"black",color:"white",padding:"4px 10px",borderRadius:20,fontWeight:900,fontSize:12, border:"2px solid black"}}>{r.numero}</span></td><td style={{padding:"12px 14px",fontWeight:900, fontSize:13}}>{r.v}</td><td style={{padding:"12px 14px",fontWeight:900}}><span style={{background:i===0?"#facc15":"black", color:i===0?"black":"white", padding:"4px 8px", borderRadius:8}}>{r.pct}%</span></td><td style={{padding:"12px 14px",width:140}}><div style={{height:12,background:"white",border:"3px solid black",borderRadius:10}}><div style={{width:`${r.pct}%`,height:"100%",background:i===0?"#eab308":"black",borderRadius:10}}></div></div></td></tr>)}
+                {total===0?<tr><td colSpan={7} style={{padding:24,textAlign:"center",fontWeight:900, fontSize:13}}>Nenhum voto ainda</td></tr>:ranking.map((r,i)=><tr key={i} style={{borderTop:"3px solid black",background:i===0?"#fef9c3":"white"}}><td style={{padding:"12px 14px",fontWeight:900}}>{i+1}º</td><td style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><img src={r.foto} style={{width:34,height:34,borderRadius:"50%",border:"3px solid black"}}/><b style={{fontSize:13}}>{r.nome}</b></td><td style={{padding:"12px 14px",fontWeight:800}}>{r.partido}</td><td style={{padding:"12px 14px"}}><span style={{background:"black",color:"white",padding:"4px 10px",borderRadius:20,fontWeight:900,fontSize:12, border:"2px solid black"}}>{r.numero}</span></td><td style={{padding:"12px 14px",fontWeight:900, fontSize:13}}>{r.v}</td><td style={{padding:"12px 14px",fontWeight:900}}><span style={{background:i===0?"#facc15":"black", color:i===0?"black":"white", padding:"4px 8px", borderRadius:8}}>{r.pct}%</span></td><td style={{padding:"12px 14px",width:140}}><div style={{height:12,background:"white",border:"3px solid black",borderRadius:10}}><div style={{width:`${r.pct}%`,height:"100%",background:i===0?"#eab308":"black",borderRadius:10}}></div></div></td></tr>)}
               </tbody>
             </table>
           </div>
         </div>
-
         <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{fontWeight:900,fontSize:14,marginBottom:12,background:"black",color:"#facc15",padding:"8px 14px",borderRadius:10,display:"inline-block", border:"3px solid black"}}>➕ CADASTRAR CANDIDATO</div>
           <div style={{display:"grid",gridTemplateColumns:"1.5fr 0.8fr 0.3fr 140px 130px",gap:10,marginTop:10}}>
@@ -187,7 +159,6 @@ export default function AdminPage(){
           {link && <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10, background:"#dcfce7", border:"3px solid black", padding:10, borderRadius:10}}><img src={link} style={{width:60,height:60,borderRadius:"50%",border:"3px solid black"}}/><span style={{fontSize:12,color:"#000",fontWeight:900}}>✅ Foto pronta!</span></div>}
           <button onClick={salvar} style={{width:"100%",marginTop:14,background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:14,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>ADICIONAR CANDIDATO +</button>
         </div>
-
         <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{fontWeight:900,fontSize:14,marginBottom:12, background:"#f1f5f9", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>📋 LISTA - {candidatos.length} CANDIDATOS</div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
