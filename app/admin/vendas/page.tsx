@@ -26,7 +26,7 @@ export default function VendasPage(){
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    if(cod!==DONO_MESTRE){ alert(`Senha inválida! Use ${DONO_MESTRE}`);return }
+    if(cod!==DONO_MESTRE){ alert(`Senha inválida`);return }
     setLiberado(true)
   }
 
