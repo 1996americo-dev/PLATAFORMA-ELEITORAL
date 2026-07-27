@@ -50,13 +50,12 @@ export default function AdminPage(){
     if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
       alert("Senha inválida! Use DONO ou LIBERADO-XXXX");return
     }
-    // BLOQUEIO DE CANCELADOS - NÃO DEIXA ENTRAR SE FOI CANCELADO NAS VENDAS
     try{
-      const canceladosPro = JSON.parse(localStorage.getItem("codigos_vendas_pro")||"[]")
-      const ehCanceladoPro = Array.isArray(canceladosPro) && canceladosPro.some((c:any)=>c.codigo===cod && c.status==="cancelado")
-      const canceladosSimples = JSON.parse(localStorage.getItem("codigos_cancelados")||"[]")
-      const ehCanceladoSimples = Array.isArray(canceladosSimples) && canceladosSimples.includes(cod)
-      if(ehCanceladoPro || ehCanceladoSimples){
+      const pro=JSON.parse(localStorage.getItem("codigos_vendas_pro")||"[]")
+      const ehPro=Array.isArray(pro)&&pro.some((c:any)=>c.codigo===cod&&c.status==="cancelado")
+      const canc=JSON.parse(localStorage.getItem("codigos_cancelados")||"[]")
+      const ehCanc=Array.isArray(canc)&&canc.includes(cod)
+      if(ehPro||ehCanc){
         alert("⛔ ACESSO CANCELADO - Esse código foi cancelado nas VENDAS. Fale com o suporte DONO.");return
       }
     }catch{}
@@ -143,11 +142,9 @@ export default function AdminPage(){
             <div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div>
             <h1 style={{fontWeight:900, marginTop:12, fontSize:18}}>ADMIN BLOQUEADO</h1>
             <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Digite a senha para entrar</p>
-            <p style={{fontSize:10,color:"#64748b", marginTop:6}}>Mesma senha do site: DONO ou LIBERADO-XXXX</p>
           </div>
           <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA DO ADMIN" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
-          <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>ENTRAR NO ADMIN →</button>
-          <a href="/" style={{display:"block", marginTop:10, textAlign:"center", fontSize:11, fontWeight:800, color:"#000"}}>← Voltar ao site</a>
+          <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>ENTRAR →</button>
         </div>
       </div>
     )
@@ -166,6 +163,7 @@ export default function AdminPage(){
         </div>
         <div style={{display:"flex",gap:8}}>
           <a href="/" className="no-print" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
+          {codigoAtual==="DONO" && <a href="/admin/vendas" className="no-print" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>}
           <button onClick={()=>setLiberado(false)} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
         </div>
       </div>
@@ -220,7 +218,7 @@ export default function AdminPage(){
             <button onClick={baixarResultado} style={{background:"#22c55e",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>📥 BAIXAR RESULTADO FINAL</button>
             <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>🗑️ ZERAR VOTOS</button>
           </div>
-          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera um arquivo .txt com ranking completo desse cliente ({codigoAtual}) • Zerar volta tudo pra 0 votos</p>
+          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera .txt com ranking completo desse cliente ({codigoAtual}) • Zerar volta tudo pra 0 votos</p>
         </div>
       </div>
     </div>
