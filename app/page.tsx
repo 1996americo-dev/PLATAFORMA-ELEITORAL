@@ -158,7 +158,7 @@ export default function Home(){
             <div style={{fontSize:12,marginTop:6}}>PIX: <b>62981796690</b></div>
             <div style={{fontSize:12}}>Valor: <b>R$ 97,90</b></div>
           </div>
-          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA: DONO ou LIBERADO-XXXX" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:13}}/>
+          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="Digite a senha" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:13}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>LIBERAR ACESSO →</button>
           <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:10,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center", border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>WHATSAPP 62 98179-6690</a>
         </div>
