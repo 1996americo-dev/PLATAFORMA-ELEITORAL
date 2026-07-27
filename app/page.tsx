@@ -19,7 +19,6 @@ export default function Home(){
   const [CAND,setCAND]=React.useState(CAND_DEFAULT)
   const [liberado,setLiberado]=React.useState(false)
   const [codInput,setCodInput]=React.useState("")
-  const [codigoAtual,setCodigoAtual]=React.useState("")
   const [cpf,setCpf]=React.useState("")
   const [cpfOk,setCpfOk]=React.useState(false)
   const [votos,setVotos]=React.useState<number[]>(Array(CAND_DEFAULT.length).fill(0))
@@ -31,24 +30,17 @@ export default function Home(){
     (async ()=>{
       const url=new URL(window.location.href)
       let codAtualFinal = localStorage.getItem("codigo_liberado") || "GERAL"
-      if(url.searchParams.get("dono")==="americo"){
-        localStorage.setItem("dono_americo","true")
-        localStorage.setItem("codigo_liberado","DONO")
-        codAtualFinal = "DONO"
-        setCodigoAtual("")
-        setLiberado(true)
-      }
+      
+      // REMOVIDO ?dono=americo DIRETO - AGORA PRECISA SENHA IGUAL ADMIN
       const c=url.searchParams.get("codigo")
       if(c && c.toUpperCase().startsWith("LIBERADO-")){
         localStorage.setItem("codigo_liberado",c.toUpperCase())
         codAtualFinal = c.toUpperCase()
-        setCodigoAtual(c.toUpperCase())
         setLiberado(true)
       }
       const cod=localStorage.getItem("codigo_liberado")
       if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
         codAtualFinal = cod
-        setCodigoAtual(cod==="DONO"?"":cod)
         setLiberado(true)
       }
       try{
@@ -60,7 +52,6 @@ export default function Home(){
           localStorage.removeItem("codigo_liberado")
           localStorage.removeItem("cpf_validado_"+codAtualFinal)
           setLiberado(false)
-          setCodigoAtual("")
           return
         }
       }catch(e){}
@@ -109,9 +100,8 @@ export default function Home(){
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){ alert("Use LIBERADO-XXXX"); return }
+    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){ alert("Senha inválida! Use DONO ou LIBERADO-XXXX"); return }
     localStorage.setItem("codigo_liberado",cod)
-    setCodigoAtual(cod==="DONO"?"":cod)
     setLiberado(true)
     window.location.reload()
   }
@@ -146,11 +136,10 @@ export default function Home(){
     return(
       <div style={{minHeight:"100vh",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"system-ui"}}>
         <div style={{background:"white",borderRadius:20,padding:32,width:420,textAlign:"center",border:"4px solid black", boxShadow:"8px 8px 0px #000"}}>
-          <div style={{width:80,height:80,background:"#fee2e2",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:40, border:"3px solid black"}}>⛔</div>
+          <div style={{width:80,height:80,background:"#fee2e2",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:40, border:"4px solid black"}}>⛔</div>
           <h1 style={{fontWeight:900,fontSize:22,marginTop:16,color:"#dc2626"}}>ACESSO CANCELADO</h1>
           <p style={{fontSize:13,color:"#475569",marginTop:8}}>Este código foi <b>bloqueado pelo administrador</b></p>
-          <div style={{background:"#fef2f2",border:"3px solid black",borderRadius:10,padding:10,marginTop:14,fontSize:12,fontWeight:900,color:"#991b1b"}}>{codigoBloq}</div>
-          <p style={{fontSize:12,color:"#64748b",marginTop:12}}>Entre em contato para regularizar</p>
+          <div style={{background:"#fef2f2",border:"4px solid black",borderRadius:10,padding:10,marginTop:14,fontSize:12,fontWeight:900,color:"#991b1b"}}>{codigoBloq}</div>
           <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:14,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none", border:"3px solid black"}}>FALAR NO WHATSAPP</a>
         </div>
       </div>
@@ -160,20 +149,18 @@ export default function Home(){
   if(!liberado){
     return(
       <div style={{minHeight:"100vh",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"system-ui"}}>
-        <div style={{background:"white",borderRadius:16,padding:24,width:380, border:"4px solid black", boxShadow:"8px 8px 0px #000"}}>
-          <div style={{textAlign:"center"}}>
-            <div style={{width:60,height:60,background:"#fef9c3",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:28, border:"3px solid black"}}>🔒</div>
-            <h1 style={{fontWeight:900,fontSize:20,marginTop:12}}>PLATAFORMA ELEITORAL 2026</h1>
-            <p style={{fontSize:12,color:"#64748b", fontWeight:700}}>Acesso restrito - Liberação via PIX</p>
-          </div>
-          <div style={{background:"#f8fafc",border:"3px solid black",borderRadius:12,padding:12,marginTop:16}}>
+        <div style={{background:"white",borderRadius:20,padding:28,width:400,border:"4px solid black", boxShadow:"8px 8px 0px #000", textAlign:"center"}}>
+          <div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div>
+          <h1 style={{fontWeight:900,fontSize:18,marginTop:12}}>PLATAFORMA ELEITORAL 2026</h1>
+          <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Acesso restrito - Digite a senha</p>
+          <div style={{background:"#f8fafc",border:"3px solid black",borderRadius:12,padding:12,marginTop:14, textAlign:"left"}}>
             <div style={{fontWeight:900,fontSize:12}}>💰 LIBERAÇÃO IMEDIATA</div>
-            <div style={{fontSize:13,marginTop:6}}>PIX: <b>62981796690</b></div>
+            <div style={{fontSize:12,marginTop:6}}>PIX: <b>62981796690</b></div>
             <div style={{fontSize:12}}>Valor: <b>R$ 97,90</b></div>
           </div>
-          <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
-          <button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",padding:12,borderRadius:10,fontWeight:900, border:"3px solid black"}}>LIBERAR ACESSO →</button>
-          <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center", border:"3px solid black"}}>WHATSAPP 62 98179-6690</a>
+          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA: DONO ou LIBERADO-XXXX" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:13}}/>
+          <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>LIBERAR ACESSO →</button>
+          <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:10,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center", border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>WHATSAPP 62 98179-6690</a>
         </div>
       </div>
     )
@@ -181,27 +168,25 @@ export default function Home(){
 
   return(
     <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"system-ui"}}>
-      {/* HEADER COM CONTORNO PRETO FORTE */}
       <div style={{background:"linear-gradient(90deg,#0f172a,#1e293b)",color:"white",padding:"14px 20px",display:"flex",justifyContent:"space-between",alignItems:"center", borderBottom:"4px solid black"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900, border:"3px solid black"}}>26</div>
+          <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900, border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>26</div>
           <div>
             <div style={{fontWeight:900,fontSize:14, letterSpacing:"0.5px"}}>PLATAFORMA ELEITORAL 2026</div>
-            <div style={{fontSize:10,opacity:0.9, fontWeight:700}}>{total} VOTOS • {CAND.length} CANDIDATOS</div>
+            <div style={{fontSize:10,opacity:0.9, fontWeight:700, background:"white", color:"black", padding:"2px 8px", borderRadius:20, display:"inline-block", marginTop:2, border:"2px solid black"}}>{total} VOTOS • {CAND.length} CANDIDATOS</div>
           </div>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <span style={{background:"#22c55e",padding:"5px 12px",borderRadius:20,fontSize:10,fontWeight:900, border:"3px solid black"}}>● AO VIVO</span>
-          <a href="/admin?dono=americo" style={{background:"white",color:"black",padding:"6px 14px",borderRadius:8,fontSize:11,textDecoration:"none",fontWeight:900, border:"3px solid black"}}>ADMIN</a>
+          <span style={{background:"#22c55e",padding:"5px 12px",borderRadius:20,fontSize:10,fontWeight:900, border:"3px solid black", boxShadow:"2px 2px 0px #000"}}>● AO VIVO</span>
+          <a href="/admin" style={{background:"white",color:"black",padding:"6px 14px",borderRadius:10,fontSize:11,textDecoration:"none",fontWeight:900, border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>ADMIN</a>
         </div>
       </div>
 
       <div style={{display:"grid",gridTemplateColumns:"320px 1fr",gap:16,padding:16,maxWidth:1450,margin:"0 auto"}}>
         <div style={{display:"flex",flexDirection:"column",gap:14}}>
-          {/* RANKING COM CONTORNO CHAMATIVO */}
           <div style={{background:"white",borderRadius:14,padding:14,border:"4px solid black", boxShadow:"6px 6px 0px #000"}}>
             <div style={{fontWeight:900,fontSize:12,display:"flex",justifyContent:"space-between", alignItems:"center"}}>
-              <span style={{background:"black", color:"#facc15", padding:"4px 10px", borderRadius:8}}>🏆 RANKING</span>
+              <span style={{background:"black", color:"#facc15", padding:"4px 10px", borderRadius:8, border:"2px solid black"}}>🏆 RANKING</span>
               <span style={{background:"black",color:"white",padding:"4px 10px",borderRadius:10,fontSize:10, fontWeight:900, border:"2px solid black"}}>{total} VOTOS</span>
             </div>
             <div style={{marginTop:12,display:"flex",flexDirection:"column",gap:8}}>
@@ -215,19 +200,17 @@ export default function Home(){
             </div>
           </div>
 
-          {/* CPF COM CONTORNO */}
           <div style={{background:"white",borderRadius:14,padding:14,border:"4px solid black", boxShadow:"6px 6px 0px #000"}}>
-            <div style={{fontWeight:900,fontSize:12, background:"black", color:"white", display:"inline-block", padding:"4px 10px", borderRadius:8}}>🛡 VALIDAÇÃO CPF</div>
+            <div style={{fontWeight:900,fontSize:12, background:"black", color:"white", display:"inline-block", padding:"4px 10px", borderRadius:8, border:"2px solid black"}}>🛡 VALIDAÇÃO CPF</div>
             <div style={{fontSize:10,color:"#000",marginTop:6, fontWeight:700}}>1 CPF = 1 Voto neste cliente</div>
             <input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:10,padding:12,border:cpfOk?"4px solid #22c55e":"3px solid black",borderRadius:10,boxSizing:"border-box",textAlign:"center",fontWeight:900, fontSize:13}}/>
             <button onClick={validarCPF} style={{width:"100%",marginTop:10,background:cpfOk?"#22c55e":"black",color:cpfOk?"white":"#facc15",padding:12,borderRadius:10,fontWeight:900,fontSize:12,border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>{cpfOk?"✅ VALIDADO - PODE VOTAR":"VALIDAR CPF"}</button>
           </div>
         </div>
 
-        {/* CANDIDATOS COM CONTORNO FORTE E PROFISSIONAL */}
         <div style={{background:"white",borderRadius:16,padding:16,border:"4px solid black", boxShadow:"6px 6px 0px #000"}}>
           <div style={{display:"flex",justifyContent:"space-between", alignItems:"center", borderBottom:"4px solid black", paddingBottom:10}}>
-            <div style={{fontWeight:900,fontSize:15, background:"black", color:"#facc15", padding:"6px 12px", borderRadius:8}}>CANDIDATOS 2026</div>
+            <div style={{fontWeight:900,fontSize:15, background:"black", color:"#facc15", padding:"6px 12px", borderRadius:8, border:"2px solid black"}}>CANDIDATOS 2026</div>
             <div style={{fontSize:11,background:"#facc15",padding:"6px 12px",borderRadius:20, fontWeight:900, border:"3px solid black"}}>{CAND.length} candidatos</div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14,marginTop:16}}>

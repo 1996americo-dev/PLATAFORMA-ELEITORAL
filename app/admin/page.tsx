@@ -16,9 +16,8 @@ export default function AdminPage(){
   const [cargoCustom,setCargoCustom]=React.useState("")
   const fileRef=React.useRef<HTMLInputElement>(null)
 
-  const exibir = (cod:string) => cod==="DONO"?"PRINCIPAL":cod
-
   React.useEffect(()=>{
+    // SÓ LIBERA SE JÁ DIGITOU SENHA ANTES - SEM AUTO LOGIN POR URL
     const cod=localStorage.getItem("codigo_liberado")
     if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
       setCodigoAtual(cod)
@@ -53,7 +52,10 @@ export default function AdminPage(){
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){alert("Use LIBERADO-XXXX");return}
+    // AGORA PRECISA DIGITAR SENHA - NÃO ENTRA MAIS DIRETO
+    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
+      alert("Senha inválida! Use DONO ou LIBERADO-XXXX");return
+    }
     localStorage.setItem("codigo_liberado",cod)
     setCodigoAtual(cod)
     setLiberado(true)
@@ -104,10 +106,16 @@ export default function AdminPage(){
     return(
       <div style={{minHeight:"100vh",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",padding:16, fontFamily:"system-ui"}}>
         <div style={{background:"white",borderRadius:20,padding:28,width:400,border:"4px solid black", boxShadow:"8px 8px 0px #000"}}>
-          <div style={{textAlign:"center"}}><div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div><h1 style={{fontWeight:900, marginTop:12, fontSize:18}}>ADMIN BLOQUEADO</h1><p style={{fontSize:11,color:"#000", fontWeight:800, background:"#f1f5f9", padding:"4px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>Digite LIBERADO-XXXX da venda</p></div>
-          <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
-          <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>LIBERAR ADMIN →</button>
-          <p style={{fontSize:9,color:"#64748b",textAlign:"center",marginTop:10, fontWeight:700}}>?dono=americo não entra mais direto, precisa senha!</p>
+          <div style={{textAlign:"center"}}>
+            <div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div>
+            <h1 style={{fontWeight:900, marginTop:12, fontSize:18}}>ADMIN BLOQUEADO</h1>
+            <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Digite a senha para entrar</p>
+            <p style={{fontSize:10,color:"#64748b", marginTop:6}}>Apenas o dono tem acesso</p>
+          </div>
+          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA DO ADMIN" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
+          <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>ENTRAR NO ADMIN →</button>
+          <p style={{fontSize:9,color:"#94a3b8",textAlign:"center",marginTop:10, fontWeight:700}}>Senha padrão: DONO | Clientes: LIBERADO-XXXX</p>
+          <a href="/" style={{display:"block", marginTop:10, textAlign:"center", fontSize:11, fontWeight:800, color:"#000"}}>← Voltar ao site</a>
         </div>
       </div>
     )
@@ -116,8 +124,6 @@ export default function AdminPage(){
   return(
     <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"system-ui"}}>
       <style>{`@media print{.no-print{display:none!important}}`}</style>
-      
-      {/* HEADER PROFISSIONAL MESMO ESTILO DO PRINCIPAL */}
       <div style={{background:"linear-gradient(90deg,#0f172a,#1e293b)",color:"white",padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid black"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{background:"#facc15",color:"black",width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:14,border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>ADM</div>
@@ -129,12 +135,11 @@ export default function AdminPage(){
         <div style={{display:"flex",gap:8}}>
           <a href="/" className="no-print" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
           <a href="/admin/vendas?dono=americo" className="no-print" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>
+          <button onClick={()=>{localStorage.removeItem("codigo_liberado"); window.location.href="/"}} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
         </div>
       </div>
 
       <div style={{maxWidth:1200,margin:"0 auto",padding:16,display:"flex",flexDirection:"column",gap:16}}>
-        
-        {/* CARDS TOPO CHAMATIVO */}
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}} className="no-print">
           <div style={{background:"white",borderRadius:14,padding:16,border:"4px solid black",display:"flex",justifyContent:"space-between",alignItems:"center", boxShadow:"6px 6px 0px #000"}}>
             <div><div style={{fontSize:10,fontWeight:900, background:"black", color:"#facc15", padding:"4px 8px", borderRadius:6, display:"inline-block"}}>TOTAL VOTOS</div><div style={{fontSize:26,fontWeight:900, marginTop:6}}>{total}</div></div>
@@ -150,7 +155,6 @@ export default function AdminPage(){
           </div>
         </div>
 
-        {/* RANKING PROFISSIONAL */}
         <div style={{background:"white",borderRadius:16,border:"4px solid black",overflow:"hidden", boxShadow:"6px 6px 0px #000"}}>
           <div style={{padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid black",background:"#f8fafc"}}>
             <div style={{fontWeight:900,fontSize:14, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, border:"3px solid black"}}>🏆 RANKING - {total} VOTOS</div>
@@ -166,7 +170,6 @@ export default function AdminPage(){
           </div>
         </div>
 
-        {/* CADASTRO CHAMATIVO */}
         <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{fontWeight:900,fontSize:14,marginBottom:12,background:"black",color:"#facc15",padding:"8px 14px",borderRadius:10,display:"inline-block", border:"3px solid black"}}>➕ CADASTRAR CANDIDATO</div>
           <div style={{display:"grid",gridTemplateColumns:"1.5fr 0.8fr 0.3fr 140px 130px",gap:10,marginTop:10}}>
