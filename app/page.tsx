@@ -171,13 +171,11 @@ export default function Home(){
           <div style={{textAlign:"center"}}>
             <div style={{width:60,height:60,background:"#fef9c3",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:28, border:"3px solid black"}}>🔒</div>
             <h1 style={{fontWeight:900,fontSize:20,marginTop:12}}>PLATAFORMA ELEITORAL 2026</h1>
-            <p style={{fontSize:12,color:"#64748b", fontWeight:700}}>Acesso restrito - Liberação via PIX</p>
           </div>
           <div style={{background:"#f8fafc",border:"3px solid black",borderRadius:12,padding:12,marginTop:16,textAlign:"center"}}>
             <div style={{fontWeight:900,fontSize:12}}>🔒 ACESSO RESTRITO</div>
-            <div style={{fontSize:11,marginTop:4,color:"#475569"}}>Digite seu código LIBERADO-XXXX ou DONO</div>
           </div>
-          <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
+          <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="•••• •••• ••••" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box",letterSpacing:"2px"}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",padding:12,borderRadius:10,fontWeight:900, border:"3px solid black"}}>LIBERAR ACESSO →</button>
           <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center", border:"3px solid black"}}>WHATSAPP 62 98179-6690</a>
         </div>
