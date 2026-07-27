@@ -57,7 +57,7 @@ export default function AdminPage(){
       return
     }
     if(!cod.startsWith("LIBERADO-")&&cod!==DONO_MESTRE){
-      alert(`Senha inválida! Use ${DONO_MESTRE} ou LIBERADO-XXXX`);return
+      alert(`Senha inválida! Use ${`⛔ Código inválido!`} ou Código inválido!`);return
     }
     try{
       const pro=JSON.parse(localStorage.getItem("codigos_vendas_pro")||"[]")
