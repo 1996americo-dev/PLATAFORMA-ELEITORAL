@@ -16,31 +16,17 @@ export default function AdminPage(){
   const [cargoCustom,setCargoCustom]=React.useState("")
   const fileRef=React.useRef<HTMLInputElement>(null)
 
+  const exibir = (cod:string) => cod==="DONO"?"PRINCIPAL":cod
+
   React.useEffect(()=>{
-    const url=new URL(window.location.href)
-    if(url.searchParams.get("dono")==="americo"){
-      localStorage.setItem("dono_americo","true")
-      localStorage.setItem("codigo_liberado","DONO")
-      setCodigoAtual("DONO")
-      setLiberado(true)
-    }
-    const c=url.searchParams.get("codigo")
-    if(c && c.toUpperCase().startsWith("LIBERADO-")){
-      localStorage.setItem("codigo_liberado",c.toUpperCase())
-      setCodigoAtual(c.toUpperCase())
-      setLiberado(true)
-    }
     const cod=localStorage.getItem("codigo_liberado")
     if(cod && (cod.startsWith("LIBERADO-")||cod==="DONO")){
       setCodigoAtual(cod)
       setLiberado(true)
     }
-
-    // ISOLADO POR CLIENTE
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     const cc=localStorage.getItem("candidatos_"+codAtual)
     const v=localStorage.getItem("votos_"+codAtual)
-
     if(cc){
       setCandidatos(JSON.parse(cc))
     } else {
@@ -67,10 +53,7 @@ export default function AdminPage(){
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
-      alert("Use LIBERADO-XXXX")
-      return
-    }
+    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){alert("Use LIBERADO-XXXX");return}
     localStorage.setItem("codigo_liberado",cod)
     setCodigoAtual(cod)
     setLiberado(true)
@@ -80,16 +63,9 @@ export default function AdminPage(){
   function handleFoto(e:any){
     const file=e.target.files?.[0]
     if(!file) return
-    if(file.size>2*1024*1024){
-      alert("Foto muito grande! Max 2MB")
-      return
-    }
+    if(file.size>2*1024*1024){alert("Foto muito grande! Max 2MB");return}
     const reader=new FileReader()
-    reader.onload=(ev)=>{
-      const base64=ev.target?.result as string
-      setLink(base64)
-      alert("✅ Foto carregada!")
-    }
+    reader.onload=(ev)=>{const base64=ev.target?.result as string;setLink(base64);alert("✅ Foto carregada!")}
     reader.readAsDataURL(file)
   }
 
@@ -99,14 +75,7 @@ export default function AdminPage(){
     const cargoFinal=cargo==="Outros"?cargoCustom:cargo
     if(cargo==="Outros" &&!cargoCustom){alert("Digite o cargo em Outros");return}
     const listaProps=propostas.split(";").filter(p=>p.trim()!=="").map(p=>p.trim())
-    const novo={
-      nome,
-      partido:partido+" - "+numero,
-      numero,
-      foto:link||`https://i.pravatar.cc/150?img=${candidatos.length+20}`,
-      cargo:cargoFinal,
-      propostas:listaProps.length>0?listaProps:["Sem propostas"]
-    }
+    const novo={nome,partido:partido+" - "+numero,numero,foto:link||`https://i.pravatar.cc/150?img=${candidatos.length+20}`,cargo:cargoFinal,propostas:listaProps.length>0?listaProps:["Sem propostas"]}
     const lista=[...candidatos,novo]
     setCandidatos(lista)
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
@@ -129,23 +98,16 @@ export default function AdminPage(){
   }
 
   const total=votos.reduce((a,b)=>a+b,0)
-  const ranking=candidatos.map((c,i)=>({
-    nome:c.nome,partido:c.partido,numero:c.numero,foto:c.foto,cargo:c.cargo,
-    propostas:c.propostas||[],v:votos[i]||0,
-    pct:total>0?Math.round((votos[i]||0)/total*100):0
-  })).sort((a,b)=>b.v-a.v)
+  const ranking=candidatos.map((c,i)=>({nome:c.nome,partido:c.partido,numero:c.numero,foto:c.foto,cargo:c.cargo,propostas:c.propostas||[],v:votos[i]||0,pct:total>0?Math.round((votos[i]||0)/total*100):0})).sort((a,b)=>b.v-a.v)
 
   if(!liberado){
     return(
-      <div style={{minHeight:"100vh",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:"system-ui"}}>
+      <div style={{minHeight:"100vh",background:"#0f172a",display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
         <div style={{background:"white",borderRadius:16,padding:24,width:380,border:"3px solid black"}}>
-          <div style={{textAlign:"center"}}>
-            <div style={{fontSize:30}}>🔒</div>
-            <h1 style={{fontWeight:900}}>ADMIN BLOQUEADO</h1>
-            <p style={{fontSize:11,color:"#64748b"}}>Use mesmo LIBERADO-XXXX das vendas</p>
-          </div>
-          <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX ou DONO" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
+          <div style={{textAlign:"center"}}><div style={{fontSize:30}}>🔒</div><h1 style={{fontWeight:900}}>ADMIN BLOQUEADO</h1><p style={{fontSize:11,color:"#64748b"}}>Digite LIBERADO-XXXX da venda</p></div>
+          <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="LIBERADO-XXXX" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",padding:12,borderRadius:10,fontWeight:900,border:"2px solid black"}}>LIBERAR ADMIN →</button>
+          <p style={{fontSize:9,color:"#94a3b8",textAlign:"center",marginTop:8}}>?dono=americo não entra mais direto, precisa senha!</p>
         </div>
       </div>
     )
@@ -158,12 +120,12 @@ export default function AdminPage(){
         <div style={{display:"flex",alignItems:"center",gap:10}}>
           <div style={{background:"#facc15",color:"black",width:32,height:32,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:12,border:"2px solid black"}}>ADM</div>
           <div>
-            <div style={{fontWeight:900,fontSize:13}}>PAINEL ADMIN • {codigoAtual} • 2026</div>
-            <div style={{fontSize:10,opacity:0.9}}>{candidatos.length} candidatos • {total} votos • Cliente: {codigoAtual}</div>
+            <div style={{fontWeight:900,fontSize:13}}>PAINEL ADMIN • {exibir(codigoAtual)} • 2026</div>
+            <div style={{fontSize:10,opacity:0.9}}>{candidatos.length} candidatos • {total} votos • Cliente: {exibir(codigoAtual)}</div>
           </div>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <a href="/?dono=americo" className="no-print" style={{background:"white",color:"black",padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:800,textDecoration:"none",border:"2px solid black"}}>Ver Site</a>
+          <a href="/" className="no-print" style={{background:"white",color:"black",padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:800,textDecoration:"none",border:"2px solid black"}}>Ver Site</a>
           <a href="/admin/vendas?dono=americo" className="no-print" style={{background:"#22c55e",color:"white",padding:"6px 12px",borderRadius:8,fontSize:11,fontWeight:800,textDecoration:"none",border:"2px solid black"}}>Vendas</a>
         </div>
       </div>
@@ -171,7 +133,7 @@ export default function AdminPage(){
       <div style={{maxWidth:1100,margin:"0 auto",padding:16,display:"flex",flexDirection:"column",gap:16}}>
         <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:12}} className="no-print">
           <div style={{background:"white",borderRadius:12,padding:14,border:"3px solid black",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <div><div style={{fontSize:10,fontWeight:900}}>TOTAL VOTOS - {codigoAtual}</div><div style={{fontSize:22,fontWeight:900}}>{total}</div></div>
+            <div><div style={{fontSize:10,fontWeight:900}}>TOTAL VOTOS - {exibir(codigoAtual)}</div><div style={{fontSize:22,fontWeight:900}}>{total}</div></div>
             <div style={{background:"#dcfce7",width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,border:"2px solid black"}}>📊</div>
           </div>
           <div style={{background:"white",borderRadius:12,padding:14,border:"3px solid black",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
@@ -186,8 +148,8 @@ export default function AdminPage(){
 
         <div style={{background:"white",borderRadius:14,border:"3px solid black",overflow:"hidden"}}>
           <div style={{padding:"14px 16px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"3px solid black",background:"#f8fafc"}}>
-            <div style={{fontWeight:900,fontSize:13}}>🏆 RANKING - CLIENTE {codigoAtual} - {total} VOTOS</div>
-            <button onClick={()=>window.print()} className="no-print" style={{background:"black",color:"#facc15",border:"2px solid black",padding:"6px 14px",borderRadius:8,fontWeight:900,fontSize:11,cursor:"pointer"}}>🖨️ IMPRIMIR</button>
+            <div style={{fontWeight:900,fontSize:13}}>🏆 RANKING - CLIENTE {exibir(codigoAtual)} - {total} VOTOS</div>
+            <button onClick={()=>window.print()} className="no-print" style={{background:"black",color:"#facc15",border:"2px solid black",padding:"6px 14px",borderRadius:8,fontWeight:900,fontSize:11,cursor:"pointer"}}>🖨 IMPRIMIR</button>
           </div>
           <div style={{overflowX:"auto"}}>
             <table style={{width:"100%",fontSize:12,borderCollapse:"collapse"}}>
@@ -200,7 +162,7 @@ export default function AdminPage(){
         </div>
 
         <div className="no-print" style={{background:"white",borderRadius:14,border:"3px solid black",padding:16}}>
-          <div style={{fontWeight:900,fontSize:13,marginBottom:10,background:"black",color:"#facc15",padding:"6px 10px",borderRadius:8,display:"inline-block"}}>➕ CADASTRAR - CLIENTE {codigoAtual}</div>
+          <div style={{fontWeight:900,fontSize:13,marginBottom:10,background:"black",color:"#facc15",padding:"6px 10px",borderRadius:8,display:"inline-block"}}>➕ CADASTRAR - CLIENTE {exibir(codigoAtual)}</div>
           <div style={{display:"grid",gridTemplateColumns:"1.5fr 0.8fr 0.3fr 140px 120px",gap:8,marginTop:10}}>
             <input value={nome} onChange={e=>setNome(e.target.value)} placeholder="Nome completo" style={{border:"3px solid black",borderRadius:8,padding:10,fontSize:12,fontWeight:700}}/>
             <input value={partido} onChange={e=>setPartido(e.target.value)} placeholder="Partido ex: PL" style={{border:"3px solid black",borderRadius:8,padding:10,fontSize:12,fontWeight:700}}/>
@@ -214,11 +176,11 @@ export default function AdminPage(){
           <input value={link} onChange={e=>setLink(e.target.value)} placeholder="Link da foto ou use SUBIR FOTOS" style={{width:"100%",marginTop:8,border:"3px solid black",borderRadius:8,padding:10,fontSize:12,boxSizing:"border-box",fontWeight:700}}/>
           <textarea value={propostas} onChange={e=>setPropostas(e.target.value)} placeholder="Propostas separadas por ;" style={{width:"100%",marginTop:8,border:"3px solid black",borderRadius:8,padding:10,fontSize:12,boxSizing:"border-box",fontWeight:700,minHeight:60}}/>
           {link && <div style={{marginTop:8,display:"flex",alignItems:"center",gap:8}}><img src={link} style={{width:60,height:60,borderRadius:"50%",border:"3px solid black"}}/><span style={{fontSize:11,color:"#22c55e",fontWeight:900}}>✅ Foto pronta!</span></div>}
-          <button onClick={salvar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",border:"3px solid black",borderRadius:10,padding:12,fontWeight:900,fontSize:13,cursor:"pointer"}}>ADICIONAR CANDIDATO - {codigoAtual} +</button>
+          <button onClick={salvar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",border:"3px solid black",borderRadius:10,padding:12,fontWeight:900,fontSize:13,cursor:"pointer"}}>ADICIONAR CANDIDATO - {exibir(codigoAtual)} +</button>
         </div>
 
         <div className="no-print" style={{background:"white",borderRadius:14,border:"3px solid black",padding:16}}>
-          <div style={{fontWeight:900,fontSize:13,marginBottom:10}}>📋 LISTA - {codigoAtual} - {candidatos.length} CANDIDATOS</div>
+          <div style={{fontWeight:900,fontSize:13,marginBottom:10}}>📋 LISTA - {exibir(codigoAtual)} - {candidatos.length} CANDIDATOS</div>
           <div style={{display:"flex",flexDirection:"column",gap:8}}>
             {candidatos.map((c,i)=>(
               <div key={i} style={{border:"3px solid black",background:"#f8fafc",borderRadius:10,padding:"10px 12px"}}>
