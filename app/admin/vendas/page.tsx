@@ -1,29 +1,55 @@
 "use client"
 import React from "react"
 
+type Cliente = { codigo:string, cliente:string, status:"ativo"|"cancelado", data:string }
+
 export default function VendasPage(){
   const [liberado,setLiberado]=React.useState(false)
   const [codInput,setCodInput]=React.useState("")
-  const [codigos,setCodigos]=React.useState<string[]>([])
+  const [nomeCliente,setNomeCliente]=React.useState("")
+  const [clientes,setClientes]=React.useState<Cliente[]>([])
 
   React.useEffect(()=>{
-    const c=localStorage.getItem("codigos_vendas")
-    if(c) setCodigos(JSON.parse(c))
+    const c=localStorage.getItem("codigos_vendas_pro")
+    if(c) setClientes(JSON.parse(c))
+    // migrar antigo se houver
+    const antigo=localStorage.getItem("codigos_vendas")
+    if(antigo && !c){
+      try{
+        const lista:string[]=JSON.parse(antigo)
+        const nova:Cliente[]=lista.map(cod=>({codigo:cod,cliente:"Cliente",status:"ativo",data:new Date().toLocaleDateString()}))
+        setClientes(nova)
+        localStorage.setItem("codigos_vendas_pro",JSON.stringify(nova))
+      }catch{}
+    }
   },[])
+
+  function salvarLista(lista:Cliente[]){
+    setClientes(lista)
+    localStorage.setItem("codigos_vendas_pro",JSON.stringify(lista))
+    // mantém também lista simples para o site principal validar
+    const simples=lista.filter(x=>x.status==="ativo").map(x=>x.codigo)
+    localStorage.setItem("codigos_ativos",JSON.stringify(simples))
+    // também mantém compatibilidade com versão antiga
+    localStorage.setItem("codigos_vendas",JSON.stringify(lista.map(x=>x.codigo)))
+    localStorage.setItem("codigos_cancelados",JSON.stringify(lista.filter(x=>x.status==="cancelado").map(x=>x.codigo)))
+  }
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
     if(cod!=="DONO"){
-      alert("Senha inválida! Use DONO");return
+      alert("Senha inválida!");return
     }
     setLiberado(true)
   }
 
   function gerar(){
+    if(!nomeCliente.trim()){alert("Digite o nome do cliente!");return}
     const novo="LIBERADO-"+Math.random().toString(36).substring(2,6).toUpperCase()
-    const lista=[...codigos,novo]
-    setCodigos(lista)
-    localStorage.setItem("codigos_vendas",JSON.stringify(lista))
+    const novoCliente:Cliente={codigo:novo,cliente:nomeCliente.trim(),status:"ativo",data:new Date().toLocaleDateString()}
+    const lista=[novoCliente,...clientes]
+    salvarLista(lista)
+    setNomeCliente("")
   }
 
   function copiar(cod:string){
@@ -31,11 +57,23 @@ export default function VendasPage(){
     alert("Copiado: "+cod)
   }
 
+  function toggleStatus(i:number){
+    const lista=[...clientes]
+    const atual=lista[i]
+    if(atual.status==="ativo"){
+      if(!confirm(`Cancelar cliente ${atual.cliente} - ${atual.codigo}? Ele NÃO vai mais conseguir entrar no site nem no admin.`)) return
+      lista[i]={...atual,status:"cancelado"}
+    } else {
+      if(!confirm(`Reativar cliente ${atual.cliente} - ${atual.codigo}?`)) return
+      lista[i]={...atual,status:"ativo"}
+    }
+    salvarLista(lista)
+  }
+
   function remover(i:number){
-    if(!confirm("Remover "+codigos[i]+"?")) return
-    const lista=codigos.filter((_,idx)=>idx!==i)
-    setCodigos(lista)
-    localStorage.setItem("codigos_vendas",JSON.stringify(lista))
+    if(!confirm("Remover definitivamente "+clientes[i].codigo+"?")) return
+    const lista=clientes.filter((_,idx)=>idx!==i)
+    salvarLista(lista)
   }
 
   if(!liberado){
@@ -55,6 +93,9 @@ export default function VendasPage(){
     )
   }
 
+  const ativos=clientes.filter(c=>c.status==="ativo").length
+  const cancelados=clientes.filter(c=>c.status==="cancelado").length
+
   return(
     <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"system-ui"}}>
       <style>{`@media print{.no-print{display:none!important}}`}</style>
@@ -63,7 +104,7 @@ export default function VendasPage(){
           <div style={{background:"#facc15",color:"black",width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:14,border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>$</div>
           <div>
             <div style={{fontWeight:900,fontSize:15, letterSpacing:"0.5px"}}>VENDAS • 2026</div>
-            <div style={{fontSize:11,opacity:0.9, fontWeight:700, background:"white", color:"black", padding:"2px 8px", borderRadius:20, display:"inline-block", marginTop:3, border:"2px solid black"}}>{codigos.length} códigos • 0 vendas</div>
+            <div style={{fontSize:11,opacity:0.9, fontWeight:700, background:"white", color:"black", padding:"2px 8px", borderRadius:20, display:"inline-block", marginTop:3, border:"2px solid black"}}>{clientes.length} códigos • {ativos} ativos • {cancelados} cancelados</div>
           </div>
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -80,26 +121,33 @@ export default function VendasPage(){
             <div style={{fontSize:11,fontWeight:800,background:"#fef9c3",padding:"6px 10px",borderRadius:20,border:"2px solid black"}}>Cada código = 1 cliente liberado</div>
           </div>
           <div style={{padding:18}}>
-            <p style={{fontSize:12,fontWeight:700,background:"#f1f5f9",padding:"10px 14px",borderRadius:10,border:"3px solid black"}}>Cada código <b>LIBERADO-XXXX</b> libera 1 cliente no site principal E serve pra você entrar no admin dele digitando o mesmo código no admin.</p>
-            <button onClick={gerar} style={{width:"100%",marginTop:14,background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:14,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>GERAR NOVO CÓDIGO +</button>
+            <div style={{display:"grid",gridTemplateColumns:"1.2fr 0.8fr",gap:10}}>
+              <input value={nomeCliente} onChange={e=>setNomeCliente(e.target.value)} placeholder="Nome do cliente (ex: Campanha João)" style={{border:"3px solid black",borderRadius:10,padding:12,fontSize:13,fontWeight:800}}/>
+              <button onClick={gerar} style={{background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:12,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>GERAR NOVO CÓDIGO +</button>
+            </div>
+            <p style={{fontSize:11,fontWeight:700,background:"#f1f5f9",padding:"8px 12px",borderRadius:8,border:"2px solid black",marginTop:10}}>Cada código <b>LIBERADO-XXXX</b> libera 1 cliente no site principal E serve pra você entrar no admin dele. Se cancelar, bloqueia site + admin.</p>
           </div>
         </div>
 
         <div style={{background:"white",borderRadius:16,border:"4px solid black",overflow:"hidden", boxShadow:"6px 6px 0px #000"}}>
-          <div style={{padding:"16px 18px",borderBottom:"4px solid black",background:"#f8fafc"}}>
-            <div style={{fontWeight:900,fontSize:14, background:"#f1f5f9", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>📋 CÓDIGOS GERADOS - {codigos.length}</div>
+          <div style={{padding:"16px 18px",borderBottom:"4px solid black",background:"#f8fafc",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <div style={{fontWeight:900,fontSize:14, background:"#f1f5f9", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>📋 CLIENTES - {clientes.length} • {ativos} ATIVOS</div>
+            <div style={{fontSize:10,fontWeight:800,background:cancelados>0?"#fee2e2":"#dcfce7",padding:"6px 10px",borderRadius:20,border:"2px solid black"}}>{cancelados} cancelados</div>
           </div>
           <div style={{padding:18}}>
             <div style={{display:"flex",flexDirection:"column",gap:10}}>
-              {codigos.length===0?<div style={{textAlign:"center",padding:24,fontWeight:900,fontSize:13,background:"#f8fafc",border:"3px dashed black",borderRadius:12}}>Nenhum código ainda - clique em GERAR NOVO CÓDIGO</div>:
-                codigos.map((c,i)=>(
-                <div key={i} style={{border:"3px solid black",background:"#f8fafc",borderRadius:12,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center", boxShadow:"3px 3px 0px #000"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:10}}>
-                    <span style={{background:"black",color:"#facc15",padding:"6px 12px",borderRadius:8,fontWeight:900,fontSize:13,border:"2px solid black"}}>{c}</span>
-                    <span style={{fontSize:11,fontWeight:700,background:"white",padding:"4px 8px",borderRadius:20,border:"2px solid black"}}>Usa no principal e no admin</span>
+              {clientes.length===0?<div style={{textAlign:"center",padding:24,fontWeight:900,fontSize:13,background:"#f8fafc",border:"3px dashed black",borderRadius:12}}>Nenhum cliente ainda - digite o nome e clique em GERAR</div>:
+                clientes.map((c,i)=>(
+                <div key={i} style={{border:"3px solid black",background:c.status==="cancelado"?"#fee2e2":"#f8fafc",borderRadius:12,padding:"12px 14px",display:"flex",justifyContent:"space-between",alignItems:"center", boxShadow:"3px 3px 0px #000", opacity:c.status==="cancelado"?0.7:1}}>
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                    <span style={{background:c.status==="cancelado"?"#ef4444":"black",color:c.status==="cancelado"?"white":"#facc15",padding:"6px 12px",borderRadius:8,fontWeight:900,fontSize:13,border:"2px solid black"}}>{c.codigo}</span>
+                    <span style={{fontSize:13,fontWeight:900}}>{c.cliente}</span>
+                    <span style={{fontSize:10,fontWeight:800,background:"white",padding:"4px 8px",borderRadius:20,border:"2px solid black"}}>{c.data}</span>
+                    <span style={{fontSize:10,fontWeight:900,background:c.status==="ativo"?"#22c55e":"#ef4444",color:c.status==="ativo"?"black":"white",padding:"4px 10px",borderRadius:20,border:"2px solid black"}}>{c.status==="ativo"?"ATIVO":"CANCELADO"}</span>
                   </div>
                   <div style={{display:"flex",gap:6}}>
-                    <button onClick={()=>copiar(c)} className="no-print" style={{background:"white",border:"3px solid black",borderRadius:8,padding:"6px 10px",fontWeight:900,fontSize:11,cursor:"pointer", boxShadow:"2px 2px 0px #000"}}>COPIAR</button>
+                    <button onClick={()=>copiar(c.codigo)} className="no-print" style={{background:"white",border:"3px solid black",borderRadius:8,padding:"6px 10px",fontWeight:900,fontSize:11,cursor:"pointer", boxShadow:"2px 2px 0px #000"}}>COPIAR</button>
+                    <button onClick={()=>toggleStatus(i)} className="no-print" style={{background:c.status==="ativo"?"#fbbf24":"#22c55e",color:"black",border:"3px solid black",borderRadius:8,padding:"6px 10px",fontWeight:900,fontSize:11,cursor:"pointer", boxShadow:"2px 2px 0px #000"}}>{c.status==="ativo"?"CANCELAR":"REATIVAR"}</button>
                     <button onClick={()=>remover(i)} className="no-print" style={{background:"#fee2e2",color:"#dc2626",border:"3px solid black",width:32,height:32,borderRadius:8,fontWeight:900,cursor:"pointer", boxShadow:"2px 2px 0px #000"}}>X</button>
                   </div>
                 </div>
