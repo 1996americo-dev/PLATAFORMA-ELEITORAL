@@ -50,14 +50,7 @@ export default function AdminPage(){
     if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
       alert("Senha inválida! Use DONO ou LIBERADO-XXXX");return
     }
-    // FUNCIONA IGUAL ANTES:
-    // Se gerar LIBERADO-ABC na Vendas, esse mesmo código libera o principal E o admin
     setCodigoAtual(cod)
-    // Carrega os dados daquele cliente específico
-    const cc=localStorage.getItem("candidatos_"+cod) || localStorage.getItem("candidatos_GERAL")
-    const v=localStorage.getItem("votos_"+cod) || localStorage.getItem("votos_GERAL")
-    if(cc){ try{ setCandidatos(JSON.parse(cc)) }catch{} }
-    if(v){ try{ setVotos(JSON.parse(v)) }catch{} }
     setLiberado(true)
   }
 
@@ -132,6 +125,7 @@ export default function AdminPage(){
         </div>
         <div style={{display:"flex",gap:8}}>
           <a href="/" className="no-print" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
+          <a href="/admin/vendas" className="no-print" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>
           <button onClick={()=>setLiberado(false)} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
         </div>
       </div>
