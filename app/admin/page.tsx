@@ -91,6 +91,36 @@ export default function AdminPage(){
     localStorage.setItem("votos_"+codAtual,JSON.stringify(nv))
   }
 
+  function zerarVotos(){
+    if(!confirm("⚠️ ZERAR TODOS OS VOTOS? Essa ação não pode ser desfeita!")) return
+    if(!confirm("Tem certeza? Todos os votos de "+codigoAtual+" vão voltar pra ZERO!")) return
+    const nv=Array(candidatos.length).fill(0)
+    setVotos(nv)
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    localStorage.setItem("votos_"+codAtual,JSON.stringify(nv))
+    alert("✅ Votos zerados!")
+  }
+
+  function baixarResultado(){
+    if(total===0){alert("Nenhum voto ainda!");return}
+    const data=new Date().toLocaleString("pt-BR")
+    let txt=`PLATAFORMA ELEITORAL 2026 - RESULTADO FINAL\nCliente: ${codigoAtual}\nData: ${data}\nTotal de Votos: ${total}\n\nRANKING FINAL:\n`
+    txt+=`----------------------------------------\n`
+    ranking.forEach((r,i)=>{
+      txt+=`${i+1}º LUGAR - ${r.nome} - ${r.partido} - Nº ${r.numero} - Cargo: ${r.cargo}\n`
+      txt+=`Votos: ${r.v} - ${r.pct}%\n`
+      txt+=`Propostas: ${(r.propostas||[]).join(" | ")}\n`
+      txt+=`----------------------------------------\n`
+    })
+    const blob=new Blob([txt],{type:"text/plain"})
+    const url=URL.createObjectURL(blob)
+    const a=document.createElement("a")
+    a.href=url
+    a.download=`RESULTADO_FINAL_${codigoAtual}_${new Date().toISOString().slice(0,10)}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   const total=votos.reduce((a,b)=>a+b,0)
   const ranking=candidatos.map((c,i)=>({nome:c.nome,partido:c.partido,numero:c.numero,foto:c.foto,cargo:c.cargo,propostas:c.propostas||[],v:votos[i]||0,pct:total>0?Math.round((votos[i]||0)/total*100):0})).sort((a,b)=>b.v-a.v)
 
@@ -102,8 +132,9 @@ export default function AdminPage(){
             <div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div>
             <h1 style={{fontWeight:900, marginTop:12, fontSize:18}}>ADMIN BLOQUEADO</h1>
             <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Digite a senha para entrar</p>
+            <p style={{fontSize:10,color:"#64748b", marginTop:6}}>Mesma senha do site: DONO ou LIBERADO-XXXX</p>
           </div>
-          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="Digite a senha" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
+          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA DO ADMIN" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>ENTRAR NO ADMIN →</button>
           <a href="/" style={{display:"block", marginTop:10, textAlign:"center", fontSize:11, fontWeight:800, color:"#000"}}>← Voltar ao site</a>
         </div>
@@ -124,7 +155,6 @@ export default function AdminPage(){
         </div>
         <div style={{display:"flex",gap:8}}>
           <a href="/" className="no-print" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
-          {codigoAtual==="DONO" && <a href="/admin/vendas" className="no-print" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>}
           <button onClick={()=>setLiberado(false)} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
         </div>
       </div>
@@ -172,6 +202,14 @@ export default function AdminPage(){
               </div>
             ))}
           </div>
+        </div>
+        <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
+          <div style={{fontWeight:900,fontSize:14,marginBottom:12, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>🏁 FINALIZAR ELEIÇÃO</div>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
+            <button onClick={baixarResultado} style={{background:"#22c55e",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>📥 BAIXAR RESULTADO FINAL</button>
+            <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>🗑️ ZERAR VOTOS</button>
+          </div>
+          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera um arquivo .txt com ranking completo desse cliente ({codigoAtual}) • Zerar volta tudo pra 0 votos</p>
         </div>
       </div>
     </div>
