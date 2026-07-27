@@ -50,6 +50,17 @@ export default function AdminPage(){
     if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
       alert("Senha inválida! Use DONO ou LIBERADO-XXXX");return
     }
+    // BLOQUEIO DE CANCELADOS - NÃO DEIXA ENTRAR SE FOI CANCELADO NAS VENDAS
+    try{
+      const canceladosPro = JSON.parse(localStorage.getItem("codigos_vendas_pro")||"[]")
+      const ehCanceladoPro = Array.isArray(canceladosPro) && canceladosPro.some((c:any)=>c.codigo===cod && c.status==="cancelado")
+      const canceladosSimples = JSON.parse(localStorage.getItem("codigos_cancelados")||"[]")
+      const ehCanceladoSimples = Array.isArray(canceladosSimples) && canceladosSimples.includes(cod)
+      if(ehCanceladoPro || ehCanceladoSimples){
+        alert("⛔ ACESSO CANCELADO - Esse código foi cancelado nas VENDAS. Fale com o suporte DONO.");return
+      }
+    }catch{}
+    localStorage.setItem("codigo_liberado",cod)
     setCodigoAtual(cod)
     setLiberado(true)
   }

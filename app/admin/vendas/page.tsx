@@ -11,35 +11,31 @@ export default function VendasPage(){
 
   React.useEffect(()=>{
     const c=localStorage.getItem("codigos_vendas_pro")
-    if(c) setClientes(JSON.parse(c))
-    // migrar antigo se houver
-    const antigo=localStorage.getItem("codigos_vendas")
-    if(antigo && !c){
-      try{
-        const lista:string[]=JSON.parse(antigo)
-        const nova:Cliente[]=lista.map(cod=>({codigo:cod,cliente:"Cliente",status:"ativo",data:new Date().toLocaleDateString()}))
-        setClientes(nova)
-        localStorage.setItem("codigos_vendas_pro",JSON.stringify(nova))
-      }catch{}
+    if(c){ setClientes(JSON.parse(c)) }
+    else{
+      const antigo=localStorage.getItem("codigos_vendas")
+      if(antigo){
+        try{
+          const lista:string[]=JSON.parse(antigo)
+          const nova:Cliente[]=lista.map(cod=>({codigo:cod,cliente:"Cliente",status:"ativo" as const,data:new Date().toLocaleDateString()}))
+          setClientes(nova)
+          salvarLista(nova)
+        }catch{}
+      }
     }
   },[])
 
   function salvarLista(lista:Cliente[]){
     setClientes(lista)
     localStorage.setItem("codigos_vendas_pro",JSON.stringify(lista))
-    // mantém também lista simples para o site principal validar
-    const simples=lista.filter(x=>x.status==="ativo").map(x=>x.codigo)
-    localStorage.setItem("codigos_ativos",JSON.stringify(simples))
-    // também mantém compatibilidade com versão antiga
     localStorage.setItem("codigos_vendas",JSON.stringify(lista.map(x=>x.codigo)))
+    localStorage.setItem("codigos_ativos",JSON.stringify(lista.filter(x=>x.status==="ativo").map(x=>x.codigo)))
     localStorage.setItem("codigos_cancelados",JSON.stringify(lista.filter(x=>x.status==="cancelado").map(x=>x.codigo)))
   }
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    if(cod!=="DONO"){
-      alert("Senha inválida!");return
-    }
+    if(cod!=="DONO"){ alert("Senha inválida! Use DONO");return }
     setLiberado(true)
   }
 
@@ -83,9 +79,9 @@ export default function VendasPage(){
           <div style={{textAlign:"center"}}>
             <div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div>
             <h1 style={{fontWeight:900, marginTop:12, fontSize:18}}>VENDAS BLOQUEADO</h1>
-            <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Digite a senha para entrar</p>
+            <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Digite DONO para entrar</p>
           </div>
-          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="Digite a senha" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
+          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA: DONO" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>ENTRAR EM VENDAS →</button>
           <a href="/admin" style={{display:"block", marginTop:10, textAlign:"center", fontSize:11, fontWeight:800, color:"#000"}}>← Voltar ao Admin</a>
         </div>
@@ -125,7 +121,7 @@ export default function VendasPage(){
               <input value={nomeCliente} onChange={e=>setNomeCliente(e.target.value)} placeholder="Nome do cliente (ex: Campanha João)" style={{border:"3px solid black",borderRadius:10,padding:12,fontSize:13,fontWeight:800}}/>
               <button onClick={gerar} style={{background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:12,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>GERAR NOVO CÓDIGO +</button>
             </div>
-            <p style={{fontSize:11,fontWeight:700,background:"#f1f5f9",padding:"8px 12px",borderRadius:8,border:"2px solid black",marginTop:10}}>Cada código <b>LIBERADO-XXXX</b> libera 1 cliente no site principal E serve pra você entrar no admin dele. Se cancelar, bloqueia site + admin.</p>
+            <p style={{fontSize:11,fontWeight:700,background:"#f1f5f9",padding:"8px 12px",borderRadius:8,border:"2px solid black",marginTop:10}}>Cada código <b>LIBERADO-XXXX</b> libera 1 cliente no site principal E serve pra você entrar no admin dele. Se clicar em CANCELAR, bloqueia site + admin.</p>
           </div>
         </div>
 
