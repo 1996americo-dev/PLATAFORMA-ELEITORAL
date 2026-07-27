@@ -16,7 +16,12 @@ export default function AdminPage(){
   const [cargoCustom,setCargoCustom]=React.useState("")
   const fileRef=React.useRef<HTMLInputElement>(null)
 
+  const DONO_MESTRE = "DONO-AMERICO-2026"
+
   React.useEffect(()=>{
+    if (typeof window!== "undefined" && window.location.search.includes("dono=")) {
+      window.history.replaceState({}, "", "/admin")
+    }
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     if(codAtual) setCodigoAtual(codAtual)
     const cc=localStorage.getItem("candidatos_"+codAtual)
@@ -47,8 +52,12 @@ export default function AdminPage(){
 
   function liberar(){
     const cod=codInput.toUpperCase().trim()
-    if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
-      alert("Senha inválida! Use DONO ou LIBERADO-XXXX");return
+    if(cod === "DONO"){
+      alert(`⛔ Acesso DONO bloqueado! Use sua senha mestra: ${DONO_MESTRE}`)
+      return
+    }
+    if(!cod.startsWith("LIBERADO-")&&cod!==DONO_MESTRE){
+      alert(`Senha inválida! Use ${DONO_MESTRE} ou LIBERADO-XXXX`);return
     }
     try{
       const pro=JSON.parse(localStorage.getItem("codigos_vendas_pro")||"[]")
@@ -59,8 +68,9 @@ export default function AdminPage(){
         alert("⛔ ACESSO CANCELADO - Esse código foi cancelado nas VENDAS. Fale com o suporte DONO.");return
       }
     }catch{}
-    localStorage.setItem("codigo_liberado",cod)
-    setCodigoAtual(cod)
+    const codigoParaSalvar = cod === DONO_MESTRE? "DONO" : cod
+    localStorage.setItem("codigo_liberado",codigoParaSalvar)
+    setCodigoAtual(codigoParaSalvar)
     setLiberado(true)
   }
 
@@ -102,7 +112,7 @@ export default function AdminPage(){
   }
 
   function zerarVotos(){
-    if(!confirm("⚠️ ZERAR TODOS OS VOTOS? Essa ação não pode ser desfeita!")) return
+    if(!confirm("⚠ ZERAR TODOS OS VOTOS? Essa ação não pode ser desfeita!")) return
     if(!confirm("Tem certeza? Todos os votos de "+codigoAtual+" vão voltar pra ZERO!")) return
     const nv=Array(candidatos.length).fill(0)
     setVotos(nv)
@@ -167,6 +177,7 @@ export default function AdminPage(){
           <button onClick={()=>setLiberado(false)} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
         </div>
       </div>
+
       <div style={{maxWidth:1200,margin:"0 auto",padding:16,display:"flex",flexDirection:"column",gap:16}}>
         <div style={{background:"white",borderRadius:16,border:"4px solid black",overflow:"hidden", boxShadow:"6px 6px 0px #000"}}>
           <div style={{padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid black",background:"#f8fafc"}}>
@@ -181,6 +192,7 @@ export default function AdminPage(){
             </table>
           </div>
         </div>
+
         <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{fontWeight:900,fontSize:14,marginBottom:12,background:"black",color:"#facc15",padding:"8px 14px",borderRadius:10,display:"inline-block", border:"3px solid black"}}>➕ CADASTRAR CANDIDATO</div>
           <div style={{display:"grid",gridTemplateColumns:"1.5fr 0.8fr 0.3fr 140px 130px",gap:10,marginTop:10}}>
@@ -194,10 +206,11 @@ export default function AdminPage(){
           </div>
           {cargo==="Outros" && <input value={cargoCustom} onChange={e=>setCargoCustom(e.target.value)} placeholder="Digite o cargo: ex: Vice-Prefeito..." style={{width:"100%",marginTop:10,border:"4px solid #eab308",borderRadius:10,padding:12,fontSize:13,boxSizing:"border-box",background:"#fef9c3",fontWeight:800}}/>}
           <input value={link} onChange={e=>setLink(e.target.value)} placeholder="Link da foto ou use SUBIR FOTOS" style={{width:"100%",marginTop:10,border:"3px solid black",borderRadius:10,padding:12,fontSize:13,boxSizing:"border-box",fontWeight:700}}/>
-          <textarea value={propostas} onChange={e=>setPropostas(e.target.value)} placeholder="Propostas separadas por ;  ex: Saúde; Educação; Segurança" style={{width:"100%",marginTop:10,border:"3px solid black",borderRadius:10,padding:12,fontSize:13,boxSizing:"border-box",fontWeight:700,minHeight:70}}/>
+          <textarea value={propostas} onChange={e=>setPropostas(e.target.value)} placeholder="Propostas separadas por ; ex: Saúde; Educação; Segurança" style={{width:"100%",marginTop:10,border:"3px solid black",borderRadius:10,padding:12,fontSize:13,boxSizing:"border-box",fontWeight:700,minHeight:70}}/>
           {link && <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10, background:"#dcfce7", border:"3px solid black", padding:10, borderRadius:10}}><img src={link} style={{width:60,height:60,borderRadius:"50%",border:"3px solid black"}}/><span style={{fontSize:12,color:"#000",fontWeight:900}}>✅ Foto pronta!</span></div>}
           <button onClick={salvar} style={{width:"100%",marginTop:14,background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:14,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>ADICIONAR CANDIDATO +</button>
         </div>
+
         <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{fontWeight:900,fontSize:14,marginBottom:12, background:"#f1f5f9", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>📋 LISTA - {candidatos.length} CANDIDATOS</div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -212,13 +225,14 @@ export default function AdminPage(){
             ))}
           </div>
         </div>
+
         <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{fontWeight:900,fontSize:14,marginBottom:12, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>🏁 FINALIZAR ELEIÇÃO</div>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
             <button onClick={baixarResultado} style={{background:"#22c55e",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>📥 BAIXAR RESULTADO FINAL</button>
-            <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>🗑️ ZERAR VOTOS</button>
+            <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>🗑 ZERAR VOTOS</button>
           </div>
-          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera .txt com ranking completo desse cliente ({codigoAtual}) • Zerar volta tudo pra 0 votos</p>
+          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera.txt com ranking completo desse cliente ({codigoAtual}) • Zerar volta tudo pra 0 votos</p>
         </div>
       </div>
     </div>
