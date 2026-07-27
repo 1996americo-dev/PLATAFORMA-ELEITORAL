@@ -10,9 +10,9 @@ export default function Home(){
   const [votoSel,setVotoSel]=React.useState<number|null>(null)
   const [jaVotou,setJaVotou]=React.useState(false)
 
-  // CONFIG PROFISSIONAL - ALTERE AQUI
-  const WHATSAPP = "5562999999999" // seu whatsapp com DDD
-  const PIX = "seu-pix@email.com" // sua chave pix
+  // CONFIG PROFISSIONAL - SEU NUMERO REAL
+  const WHATSAPP = "5562981796690" // 62 98179-6690
+  const PIX = "62981796690" // Pix celular
   const VALOR = "R$ 97,00"
 
   React.useEffect(()=>{
