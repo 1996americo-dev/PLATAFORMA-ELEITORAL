@@ -190,7 +190,7 @@ export default function Home(){
               <div style={{fontSize:18,fontWeight:900,marginTop:4}}>62981796690</div>
               <button onClick={()=>{navigator.clipboard.writeText("62981796690");alert("PIX 62981796690 copiado!")}} style={{width:"100%",marginTop:8,background:"#22c55e",color:"black",border:"3px solid black",borderRadius:8,padding:8,fontWeight:900,fontSize:12,cursor:"pointer",boxShadow:"2px 2px 0px #000"}}>📋 COPIAR CHAVE PIX</button>
             </div>
-            <a href={`https://wa.me/5562981796690?text=Olá! Meu código ${codigoBloq} foi cancelado. Fiz o PIX de R$ 97,00 - comprovante:`} target="_blank" style={{display:"block",marginTop:10,background:"#25D366",color:"black",textAlign:"center",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",border:"3px solid black",boxShadow:"3px 3px 0px #000",fontSize:13}}>💬 WHATSAPP 62 98179-6690</a>
+            <a href={`https://wa.me/5562981796690?text=Olá! Meu código ${codigoBloq} foi cancelado. Fiz o PIX de R$ 97,00 - comprovante:`} target="_blank" style={{display:"block",marginTop:10,background:"#25D366",color:"black",textAlign:"center",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",border:"3px solid black",boxShadow:"3px 3px 0px #000",fontSize:13}}>💬 WHATSAPP 62 98179-6690<br/><span style={{fontSize:10}}>Enviar comprovante</span></a>
           </div>
           <button onClick={()=>{setBloqueado(false);setCodInput("")}} style={{width:"100%",marginTop:14,background:"white",border:"3px solid black",borderRadius:10,padding:10,fontWeight:900,fontSize:12,cursor:"pointer",boxShadow:"3px 3px 0px #000"}}>← Voltar</button>
         </div>
@@ -206,8 +206,18 @@ export default function Home(){
             <div style={{width:60,height:60,background:"#fef9c3",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:28, border:"3px solid black"}}>🔒</div>
             <h1 style={{fontWeight:900,fontSize:20,marginTop:12}}>PLATAFORMA ELEITORAL 2026</h1>
           </div>
+          <div style={{background:"#f8fafc",border:"3px solid black",borderRadius:12,padding:12,marginTop:16,textAlign:"center"}}>
+            <div style={{fontWeight:900,fontSize:12}}>🔒 ACESSO RESTRITO</div>
+          </div>
+          <div style={{background:"#fef9c3",border:"3px solid black",borderRadius:12,padding:12,marginTop:12,textAlign:"center",boxShadow:"3px 3px 0px #000"}}>
+            <div style={{fontWeight:900,fontSize:13}}>PIX 62981796690</div>
+            <div style={{fontSize:11,fontWeight:800,marginTop:2}}>AMERICO QUISPE QUISPE</div>
+            <div style={{fontSize:14,fontWeight:900,marginTop:4,background:"black",color:"#facc15",display:"inline-block",padding:"3px 10px",borderRadius:8,border:"2px solid black"}}>R$ 97,90</div>
+            <button onClick={()=>{navigator.clipboard.writeText("62981796690");alert("PIX copiado: 62981796690")}} style={{width:"100%",marginTop:8,background:"white",border:"2px solid black",borderRadius:8,padding:"6px",fontWeight:900,fontSize:11,cursor:"pointer"}}>📋 COPIAR CHAVE PIX</button>
+          </div>
           <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="•••• •••• ••••" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box",letterSpacing:"2px"}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",padding:12,borderRadius:10,fontWeight:900, border:"3px solid black"}}>LIBERAR ACESSO →</button>
+          <a href="https://wa.me/5562981796690?text=Olá! Fiz o PIX de R$ 97,90 para liberar a plataforma. Comprovante:" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center", border:"3px solid black",boxShadow:"3px 3px 0px #000",fontSize:12}}>ENVIAR COMPROVANTE NO WHATSAPP</a>
         </div>
       </div>
     )
@@ -219,7 +229,7 @@ export default function Home(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900, border:"3px solid black"}}>26</div>
           <div>
-            <div style={{fontWeight:900,fontSize:14}}>PLATAFORMA ELEITORAL 2026</div>
+            <div style={{fontWeight:900,fontSize:14, letterSpacing:"0.5px"}}>PLATAFORMA ELEITORAL 2026</div>
             <div style={{fontSize:10,opacity:0.9, fontWeight:700}}>{total} VOTOS • {CAND.length} CANDIDATOS</div>
           </div>
         </div>
@@ -249,6 +259,7 @@ export default function Home(){
 
           <div style={{background:"white",borderRadius:14,padding:14,border:"4px solid black", boxShadow:"6px 6px 0px #000"}}>
             <div style={{fontWeight:900,fontSize:12, background:"black", color:"white", display:"inline-block", padding:"4px 10px", borderRadius:8}}>🛡 VALIDAÇÃO CPF</div>
+            <div style={{fontSize:10,color:"#000",marginTop:6, fontWeight:700}}>1 CPF = 1 Voto neste cliente</div>
             <input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:10,padding:12,border:cpfOk?"4px solid #22c55e":"3px solid black",borderRadius:10,boxSizing:"border-box",textAlign:"center",fontWeight:900, fontSize:13}}/>
             <button onClick={validarCPF} style={{width:"100%",marginTop:10,background:cpfOk?"#22c55e":"black",color:cpfOk?"white":"#facc15",padding:12,borderRadius:10,fontWeight:900,fontSize:12,border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>{cpfOk?"✅ VALIDADO - PODE VOTAR":"VALIDAR CPF"}</button>
           </div>
@@ -261,9 +272,9 @@ export default function Home(){
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14,marginTop:16}}>
             {CAND.map((c,i)=>(
-              <div key={i} onClick={()=>setVotoSel(i)} style={{border:votoSel===i?"4px solid #facc15":"3px solid black",borderRadius:16,padding:14,textAlign:"center",cursor:"pointer",background:votoSel===i?"#fefce8":"white", boxShadow:votoSel===i?"6px 6px 0px #eab308":"4px 4px 0px #000"}}>
+              <div key={i} onClick={()=>setVotoSel(i)} style={{border:votoSel===i?"4px solid #facc15":"3px solid black",borderRadius:16,padding:14,textAlign:"center",cursor:"pointer",background:votoSel===i?"#fefce8":"white", boxShadow:votoSel===i?"6px 6px 0px #eab308":"4px 4px 0px #000", transform:votoSel===i?"translate(-2px,-2px)":"none", transition:"all 0.15s"}}>
                 <div style={{position:"relative",display:"inline-block"}}>
-                  <img src={c.foto} alt="" style={{width:72,height:72,borderRadius:"50%",border:"4px solid black", boxShadow:"3px 3px 0px #000"}}/>
+                  <img src={c.foto} alt="" style={{width:72,height:72,borderRadius:"50%",border:`4px solid black`, boxShadow:"3px 3px 0px #000"}}/>
                   <div style={{position:"absolute",bottom:-6,right:-6,background:c.cor,color:"white",width:26,height:26,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,border:"3px solid black"}}>{c.num}</div>
                 </div>
                 <div style={{fontWeight:900,fontSize:14,marginTop:10}}>{c.nome}</div>
