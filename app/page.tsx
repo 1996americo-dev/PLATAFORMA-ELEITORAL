@@ -124,7 +124,7 @@ export default function Home(){
     const cod=codInput.toUpperCase().trim()
     if(cod==="DONO"){ alert(`⛔ Código inválido!`);return }
     if(CANCELADOS_FIXOS.includes(cod)){ setCodigoBloq(cod); setBloqueado(true); return }
-    if(!cod.startsWith("LIBERADO-")&&cod!==DONO_MESTRE){ alert("⛔ Código inválido! Use seu código LIBERADO-XXXX"); return }
+    if(!cod.startsWith("LIBERADO-")&&cod!==DONO_MESTRE){ alert("⛔ Código inválido"); return }
     const codigoSalvar = cod===DONO_MESTRE? "DONO" : cod
     localStorage.setItem("codigo_liberado",codigoSalvar)
     setCodigoAtual(codigoSalvar==="DONO"?"":codigoSalvar)
