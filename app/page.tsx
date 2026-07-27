@@ -48,16 +48,23 @@ export default function Home(){
       setCodigoAtual(cod)
       setLiberado(true)
     }
-    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
-    if(bloqueados.includes(codAtualFinal)){
-      alert("⛔ ACESSO CANCELADO - Este código foi bloqueado pelo administrador!")
-      localStorage.removeItem("codigo_liberado")
-      localStorage.removeItem("cpf_validado_"+codAtualFinal)
-      setLiberado(false)
-      setCodigoAtual("")
-      return
-    }
-    let cc = null
+      // BLOQUEIO REAL VIA SUPABASE - LUGAR CERTO
+  (async () => {
+    try{
+      const { supabase } = await import("@/lib/supabase")
+      const { data } = await supabase.from("bloqueados").select("codigo").eq("codigo", codAtualFinal).maybeSingle()
+      if(data){
+        alert("⛔ ACESSO CANCELADO - Este código foi bloqueado pelo administrador!")
+        localStorage.removeItem("codigo_liberado")
+        localStorage.removeItem("cpf_validado_"+codAtualFinal)
+        setLiberado(false)
+        setCodigoAtual("")
+        return
+      }
+    }catch(e){}
+  })()
+
+  let cc = null
     let chaveUsada = ""
     const chavesParaTentar = ["candidatos_"+codAtualFinal,"candidatos_DONO","candidatos_v21","candidatos_GERAL"]
     for(const chave of chavesParaTentar){

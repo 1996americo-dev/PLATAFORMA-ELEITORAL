@@ -1,5 +1,6 @@
 "use client"
 import React from "react"
+import { supabase } from "@/lib/supabase"
 
 export default function VendasPage(){
   const [liberado,setLiberado]=React.useState(false)
@@ -13,29 +14,16 @@ export default function VendasPage(){
       setLiberado(true)
     }
     const cod=localStorage.getItem("codigo_liberado")
-    if(cod==="DONO"){
-      setLiberado(true)
-    }
+    if(cod==="DONO"){ setLiberado(true) }
     const v=localStorage.getItem("vendas_lista")
-    if(v){
-      setVendas(JSON.parse(v))
-    }
+    if(v){ setVendas(JSON.parse(v)) }
   },[])
 
   function gerarCodigo(){
-    if(!nomeCliente){
-      alert("Digite nome do cliente")
-      return
-    }
+    if(!nomeCliente){ alert("Digite nome do cliente"); return }
     const rand = Math.random().toString(36).substring(2,6).toUpperCase() + "-" + Math.random().toString(36).substring(2,6).toUpperCase()
     const codigo = "LIBERADO-"+rand
-    const novaVenda = {
-      id: Date.now(),
-      nome: nomeCliente,
-      codigo: codigo,
-      data: new Date().toLocaleDateString(),
-      status: "ATIVO"
-    }
+    const novaVenda = { id: Date.now(), nome: nomeCliente, codigo: codigo, data: new Date().toLocaleDateString(), status: "ATIVO" }
     const lista = [...vendas, novaVenda]
     setVendas(lista)
     localStorage.setItem("vendas_lista", JSON.stringify(lista))
@@ -43,35 +31,21 @@ export default function VendasPage(){
     alert("Código gerado: "+codigo)
   }
 
-  function cancelarVenda(id:number, codigo:string){
-    if(!confirm("Cancelar cliente "+codigo+"? Ele não vai mais entrar no site!")){
-      return
-    }
-    // Remove da lista de vendas
+  async function cancelarVenda(id:number, codigo:string){
+    if(!confirm("Cancelar cliente "+codigo+"? Ele não vai mais entrar no site!")) return
+    
     const lista = vendas.filter(v=>v.id!==id)
     setVendas(lista)
     localStorage.setItem("vendas_lista", JSON.stringify(lista))
 
-    // ADICIONA NA LISTA DE BLOQUEADOS - ISSO QUE DESLOGA O CLIENTE
-    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
-    if(!bloqueados.includes(codigo)){
-      bloqueados.push(codigo)
-      localStorage.setItem("codigos_bloqueados", JSON.stringify(bloqueados))
-    }
-
-    // Se o cliente tava com esse código logado, desloga ele
-    const codigoAtual = localStorage.getItem("codigo_liberado")
-    if(codigoAtual===codigo){
-      localStorage.removeItem("codigo_liberado")
-    }
-
-    alert("Cliente "+codigo+" CANCELADO! Agora quando ele tentar entrar no site principal vai deslogar!")
+    // BLOQUEIO REAL NO BANCO - FUNCIONA EM QUALQUER LUGAR
+    const { error } = await supabase.from("bloqueados").insert({codigo})
+    if(error){ console.log(error); alert("Erro ao bloquear: "+error.message) }
+    else { alert("Cliente "+codigo+" CANCELADO! Agora em qualquer lugar do Brasil ele não entra mais!") }
   }
 
-  function reativarVenda(codigo:string){
-    const bloqueados = JSON.parse(localStorage.getItem("codigos_bloqueados")||"[]")
-    const novo = bloqueados.filter((c:string)=>c!==codigo)
-    localStorage.setItem("codigos_bloqueados", JSON.stringify(novo))
+  async function reativarVenda(codigo:string){
+    await supabase.from("bloqueados").delete().eq("codigo", codigo)
     alert(codigo+" reativado!")
   }
 
@@ -122,13 +96,6 @@ export default function VendasPage(){
               ))}
             </div>
           )}
-        </div>
-
-        <div style={{marginTop:20,background:"#1e293b",color:"white",padding:12,borderRadius:8,fontSize:11}}>
-          <b>Como funciona o CANCELAR:</b><br/>
-          1. Quando clicar CANCELAR, o código vai pra lista codigos_bloqueados<br/>
-          2. Na mesma hora, no site principal se o cliente tentar entrar com esse código, aparece "ACESSO CANCELADO" e desloga!<br/>
-          3. Só ADMIN DONO continua funcionando!
         </div>
       </div>
     </div>
