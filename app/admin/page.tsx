@@ -50,7 +50,14 @@ export default function AdminPage(){
     if(!cod.startsWith("LIBERADO-")&&cod!=="DONO"){
       alert("Senha inválida! Use DONO ou LIBERADO-XXXX");return
     }
+    // FUNCIONA IGUAL ANTES:
+    // Se gerar LIBERADO-ABC na Vendas, esse mesmo código libera o principal E o admin
     setCodigoAtual(cod)
+    // Carrega os dados daquele cliente específico
+    const cc=localStorage.getItem("candidatos_"+cod) || localStorage.getItem("candidatos_GERAL")
+    const v=localStorage.getItem("votos_"+cod) || localStorage.getItem("votos_GERAL")
+    if(cc){ try{ setCandidatos(JSON.parse(cc)) }catch{} }
+    if(v){ try{ setVotos(JSON.parse(v)) }catch{} }
     setLiberado(true)
   }
 
