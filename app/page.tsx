@@ -27,7 +27,7 @@ export default function Home(){
   const [bloqueado,setBloqueado]=React.useState(false)
   const [codigoBloq,setCodigoBloq]=React.useState("")
 
-  const DONO_MESTRE = "DONO-AMERICO-2026"
+  const DONO_MESTRE = "06032025"
   const CANCELADOS_FIXOS = ["LIBERADO-GRAZI","LIBERADO-TESTE"]
 
   React.useEffect(()=>{

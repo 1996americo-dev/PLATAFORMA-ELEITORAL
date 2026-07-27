@@ -16,7 +16,7 @@ export default function AdminPage(){
   const [cargoCustom,setCargoCustom]=React.useState("")
   const fileRef=React.useRef<HTMLInputElement>(null)
 
-  const DONO_MESTRE = "DONO-AMERICO-2026"
+  const DONO_MESTRE = "06032025"
 
   React.useEffect(()=>{
     if (typeof window!== "undefined" && window.location.search.includes("dono=")) {

@@ -9,7 +9,7 @@ export default function VendasPage(){
   const [nomeCliente,setNomeCliente]=React.useState("")
   const [clientes,setClientes]=React.useState<Cliente[]>([])
 
-  const DONO_MESTRE = "DONO-AMERICO-2026"
+  const DONO_MESTRE = "06032025"
 
   React.useEffect(()=>{
     const c=localStorage.getItem("codigos_vendas_pro")
