@@ -175,9 +175,15 @@ export default function Home(){
           <div style={{background:"#f8fafc",border:"3px solid black",borderRadius:12,padding:12,marginTop:16,textAlign:"center"}}>
             <div style={{fontWeight:900,fontSize:12}}>🔒 ACESSO RESTRITO</div>
           </div>
+          <div style={{background:"#fef9c3",border:"3px solid black",borderRadius:12,padding:12,marginTop:12,textAlign:"center",boxShadow:"3px 3px 0px #000"}}>
+            <div style={{fontWeight:900,fontSize:13}}>PIX 62981796690</div>
+            <div style={{fontSize:11,fontWeight:800,marginTop:2}}>AMERICO QUISPE QUISPE</div>
+            <div style={{fontSize:14,fontWeight:900,marginTop:4,background:"black",color:"#facc15",display:"inline-block",padding:"3px 10px",borderRadius:8,border:"2px solid black"}}>R$ 97,90</div>
+            <button onClick={()=>{navigator.clipboard.writeText("62981796690");alert("PIX copiado: 62981796690")}} style={{width:"100%",marginTop:8,background:"white",border:"2px solid black",borderRadius:8,padding:"6px",fontWeight:900,fontSize:11,cursor:"pointer"}}>📋 COPIAR CHAVE PIX</button>
+          </div>
           <input value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="•••• •••• ••••" style={{width:"100%",marginTop:12,padding:12,border:"3px solid black",borderRadius:10,textAlign:"center",fontWeight:900,boxSizing:"border-box",letterSpacing:"2px"}}/>
           <button onClick={liberar} style={{width:"100%",marginTop:8,background:"black",color:"#facc15",padding:12,borderRadius:10,fontWeight:900, border:"3px solid black"}}>LIBERAR ACESSO →</button>
-          <a href="https://wa.me/5562981796690" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center", border:"3px solid black"}}>WHATSAPP 62 98179-6690</a>
+          <a href="https://wa.me/5562981796690?text=Olá! Fiz o PIX de R$ 97,90 para liberar a plataforma. Comprovante:" target="_blank" style={{display:"block",marginTop:8,background:"#22c55e",color:"white",padding:12,borderRadius:10,fontWeight:900,textDecoration:"none",textAlign:"center", border:"3px solid black",boxShadow:"3px 3px 0px #000",fontSize:12}}>ENVIAR COMPROVANTE NO WHATSAPP</a>
         </div>
       </div>
     )
