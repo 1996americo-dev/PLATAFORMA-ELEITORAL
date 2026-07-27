@@ -185,8 +185,8 @@ export default function Home(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900}}>26</div>
           <div>
-            <div style={{fontWeight:900,fontSize:13}}>PLATAFORMA ELEITORAL 2026{codigoAtual?` - ${codigoAtual}`:""}</div>
-            <div style={{fontSize:10,opacity:0.7}}>{total} VOTOS • {CAND.length} CANDIDATOS{codigoAtual?` • Cliente: ${codigoAtual}`:""}</div>
+            <div style={{fontWeight:900,fontSize:13}}>PLATAFORMA ELEITORAL 2026</div>
+            <div style={{fontSize:10,opacity:0.7}}>{total} VOTOS • {CAND.length} CANDIDATOS</div>
           </div>
         </div>
         <div style={{display:"flex",gap:8}}>
@@ -199,7 +199,7 @@ export default function Home(){
         <div style={{display:"flex",flexDirection:"column",gap:12}}>
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
             <div style={{fontWeight:900,fontSize:12,display:"flex",justifyContent:"space-between"}}>
-              <span>🏆 RANKING{codigoAtual?` - ${codigoAtual}`:""}</span>
+              <span>🏆 RANKING</span>
               <span style={{background:"#0f172a",color:"white",padding:"2px 8px",borderRadius:10,fontSize:10}}>{total} VOTOS</span>
             </div>
             <div style={{marginTop:10,display:"flex",flexDirection:"column",gap:6}}>
@@ -214,7 +214,7 @@ export default function Home(){
           </div>
 
           <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
-            <div style={{fontWeight:900,fontSize:12}}>🛡 VALIDAÇÃO CPF{codigoAtual?` - ${codigoAtual}`:""}</div>
+            <div style={{fontWeight:900,fontSize:12}}>🛡 VALIDAÇÃO CPF</div>
             <div style={{fontSize:10,color:"#64748b",marginTop:2}}>1 CPF = 1 Voto neste cliente</div>
             <input value={cpf} onChange={e=>setCpf(e.target.value)} placeholder="000.000.000-00" style={{width:"100%",marginTop:10,padding:10,border:cpfOk?"2px solid #22c55e":"2px solid #e2e8f0",borderRadius:8,boxSizing:"border-box",textAlign:"center",fontWeight:700}}/>
             <button onClick={validarCPF} style={{width:"100%",marginTop:8,background:cpfOk?"#22c55e":"#0f172a",color:"white",padding:10,borderRadius:8,fontWeight:900,fontSize:12,border:"none"}}>{cpfOk?"✅ VALIDADO - PODE VOTAR":"VALIDAR CPF"}</button>
@@ -223,7 +223,7 @@ export default function Home(){
 
         <div style={{background:"white",borderRadius:12,padding:14,border:"1px solid #e2e8f0"}}>
           <div style={{display:"flex",justifyContent:"space-between"}}>
-            <div style={{fontWeight:900,fontSize:14}}>CANDIDATOS 2026{codigoAtual?` - ${codigoAtual}`:""}</div>
+            <div style={{fontWeight:900,fontSize:14}}>CANDIDATOS 2026</div>
             <div style={{fontSize:10,background:"#f1f5f9",padding:"4px 10px",borderRadius:20}}>{CAND.length} candidatos</div>
           </div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(220px,1fr))",gap:12,marginTop:14}}>
