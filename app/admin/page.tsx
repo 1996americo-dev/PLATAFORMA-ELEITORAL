@@ -83,6 +83,15 @@ export default function AdminPage(){
     if(!cod.startsWith("LIBERADO-")&&cod!==DONO_MESTRE){
       alert(`⛔ Código inválido!`);return
     }
+    try{
+      const pro=JSON.parse(localStorage.getItem("codigos_vendas_pro")||"[]")
+      const ehPro=Array.isArray(pro)&&pro.some((c:any)=>c.codigo===cod&&c.status==="cancelado")
+      const canc=JSON.parse(localStorage.getItem("codigos_cancelados")||"[]")
+      const ehCanc=Array.isArray(canc)&&canc.includes(cod)
+      if(ehPro||ehCanc){
+        alert("⛔ ACESSO CANCELADO");return
+      }
+    }catch{}
     const codigoParaSalvar = cod === DONO_MESTRE? "DONO" : cod
     localStorage.setItem("codigo_liberado",codigoParaSalvar)
     setCodigoAtual(codigoParaSalvar)
@@ -209,8 +218,9 @@ export default function AdminPage(){
           </div>
         </div>
         <div style={{display:"flex",gap:8}}>
-          <a href="/" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black"}}>Ver Site</a>
-          <button onClick={()=>setLiberado(false)} style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black"}}>SAIR</button>
+          <a href="/" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
+          {codigoAtual==="DONO" && <a href="/admin/vendas" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>}
+          <button onClick={()=>setLiberado(false)} style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
         </div>
       </div>
 
@@ -228,7 +238,6 @@ export default function AdminPage(){
                   <button onClick={()=>zerarClienteEspecifico(cli.codigo)} style={{background:"#fee2e2",color:"#dc2626",border:"3px solid black",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:900,cursor:"pointer"}}>ZERAR ESSE CLIENTE</button>
                 </div>
               ))}
-              {clientes.length===0 && <div style={{fontSize:12, fontWeight:700}}>Nenhum cliente ainda</div>}
             </div>
           </div>
         )}
@@ -271,7 +280,6 @@ export default function AdminPage(){
             <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,cursor:"pointer"}}>🗑 ZERAR VOTOS {codigoAtual}</button>
             <button onClick={zerarCandidatosAtual} style={{background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,cursor:"pointer"}}>💣 ZERAR CANDIDATOS {codigoAtual}</button>
           </div>
-          <p style={{fontSize:11,marginTop:8, background:"#f1f5f9", padding:8, borderRadius:8, border:"2px solid black"}}>Zerar afeta SÓ o {codigoAtual}. DONO pode zerar clientes lá em cima, um por um.</p>
         </div>
       </div>
     </div>
