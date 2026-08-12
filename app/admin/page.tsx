@@ -14,9 +14,27 @@ export default function AdminPage(){
   const [propostas,setPropostas]=React.useState("")
   const [cargo,setCargo]=React.useState("Presidente")
   const [cargoCustom,setCargoCustom]=React.useState("")
+  const [clientes, setClientes] = React.useState<any[]>([])
   const fileRef=React.useRef<HTMLInputElement>(null)
 
   const DONO_MESTRE = "06032025"
+
+  function atualizarListaClientes(){
+    const lista:any[] = []
+    for(let i=0; i<localStorage.length; i++){
+      const key = localStorage.key(i)
+      if(key && key.startsWith("candidatos_")){
+        try{
+          const cands = JSON.parse(localStorage.getItem(key) || "[]")
+          const votosKey = key.replace("candidatos_","votos_")
+          const votos = JSON.parse(localStorage.getItem(votosKey) || "[]")
+          const totalVotos = votos.reduce((a:number,b:number)=>a+b,0)
+          lista.push({ codigo: key.replace("candidatos_",""), key: key, votosKey: votosKey, qtd: cands.length, totalVotos })
+        }catch{}
+      }
+    }
+    setClientes(lista)
+  }
 
   React.useEffect(()=>{
     if (typeof window!== "undefined" && window.location.search.includes("dono=")) {
@@ -28,13 +46,8 @@ export default function AdminPage(){
     const cc=localStorage.getItem("candidatos_"+codAtual)
     const v=localStorage.getItem("votos_"+codAtual)
 
-    // CORREÇÃO DO BUG: se for "[]" não recria os 11
     if(cc!== null){
-      try{
-        setCandidatos(JSON.parse(cc))
-      } catch {
-        setCandidatos([])
-      }
+      try{ setCandidatos(JSON.parse(cc)) } catch { setCandidatos([]) }
     } else {
       const defaults = [
         {nome:"Bolsonaro",partido:"PL - 22",numero:"22",foto:"https://i.pravatar.cc/150?img=1",cargo:"Presidente",propostas:["Economia liberal","Segurança"]},
@@ -56,12 +69,9 @@ export default function AdminPage(){
     }
 
     if(v!== null){
-      try{
-        setVotos(JSON.parse(v))
-      } catch {
-        setVotos([])
-      }
+      try{ setVotos(JSON.parse(v)) } catch { setVotos([]) }
     }
+    atualizarListaClientes()
   },[])
 
   function liberar(){
@@ -71,21 +81,13 @@ export default function AdminPage(){
       return
     }
     if(!cod.startsWith("LIBERADO-")&&cod!==DONO_MESTRE){
-      alert(`Senha inválida! Use ${`⛔ Código inválido!`} ou Código inválido!`);return
+      alert(`⛔ Código inválido!`);return
     }
-    try{
-      const pro=JSON.parse(localStorage.getItem("codigos_vendas_pro")||"[]")
-      const ehPro=Array.isArray(pro)&&pro.some((c:any)=>c.codigo===cod&&c.status==="cancelado")
-      const canc=JSON.parse(localStorage.getItem("codigos_cancelados")||"[]")
-      const ehCanc=Array.isArray(canc)&&canc.includes(cod)
-      if(ehPro||ehCanc){
-        alert("⛔ ACESSO CANCELADO - Esse código foi cancelado nas VENDAS. Fale com o suporte DONO.");return
-      }
-    }catch{}
     const codigoParaSalvar = cod === DONO_MESTRE? "DONO" : cod
     localStorage.setItem("codigo_liberado",codigoParaSalvar)
     setCodigoAtual(codigoParaSalvar)
     setLiberado(true)
+    setTimeout(()=>atualizarListaClientes(), 500)
   }
 
   function handleFoto(e:any){
@@ -112,6 +114,7 @@ export default function AdminPage(){
     setVotos(nv)
     localStorage.setItem("votos_"+codAtual,JSON.stringify(nv))
     setNome("");setPartido("");setNumero("");setLink("");setPropostas("");setCargoCustom("")
+    atualizarListaClientes()
   }
 
   function remover(i:number){
@@ -123,42 +126,50 @@ export default function AdminPage(){
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     localStorage.setItem("candidatos_"+codAtual,JSON.stringify(lista))
     localStorage.setItem("votos_"+codAtual,JSON.stringify(nv))
+    atualizarListaClientes()
   }
 
   function zerarVotos(){
-    if(!confirm("⚠ ZERAR TODOS OS VOTOS? Essa ação não pode ser desfeita!")) return
-    if(!confirm("Tem certeza? Todos os votos de "+codigoAtual+" vão voltar pra ZERO!")) return
+    if(!confirm("⚠ ZERAR VOTOS de "+codigoAtual+"?")) return
     const nv=Array(candidatos.length).fill(0)
     setVotos(nv)
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     localStorage.setItem("votos_"+codAtual,JSON.stringify(nv))
-    alert("✅ Votos zerados!")
+    atualizarListaClientes()
+    alert("✅ Votos zerados de "+codAtual+"!")
   }
 
-  function zerarCandidatosTotal(){
-    if(!confirm(`⚠ ZERAR TODOS OS CANDIDATOS de ${codigoAtual}?`)) return
-    if(!confirm("Tem CERTEZA? O site vai ficar sem nenhum candidato!")) return
+  function zerarCandidatosAtual(){
+    if(!confirm(`⚠ ZERAR CANDIDATOS de ${codigoAtual}?`)) return
+    if(!confirm(`Tem CERTEZA? Só vai apagar de ${codigoAtual}`)) return
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     localStorage.setItem("candidatos_"+codAtual, JSON.stringify([]))
     localStorage.setItem("votos_"+codAtual, JSON.stringify([]))
-    // Garante que o site principal também zere
-    localStorage.setItem("candidatos_GERAL", JSON.stringify([]))
-    localStorage.setItem("votos_GERAL", JSON.stringify([]))
     setCandidatos([])
     setVotos([])
-    alert("✅ Todos os candidatos zerados em "+codAtual+" e GERAL! Agora dá F5 no site principal.")
+    atualizarListaClientes()
+    alert(`✅ Zerado só de ${codAtual}!`)
+  }
+
+  function zerarClienteEspecifico(codigoCliente:string){
+    if(!confirm(`⚠ DONO: ZERAR TUDO de ${codigoCliente}?`)) return
+    if(!confirm(`Apagar todos os candidatos e votos de ${codigoCliente}?`)) return
+    localStorage.setItem("candidatos_"+codigoCliente, JSON.stringify([]))
+    localStorage.setItem("votos_"+codigoCliente, JSON.stringify([]))
+    if(codigoCliente === codigoAtual){
+      setCandidatos([])
+      setVotos([])
+    }
+    atualizarListaClientes()
+    alert(`✅ Cliente ${codigoCliente} zerado!`)
   }
 
   function baixarResultado(){
     if(total===0){alert("Nenhum voto ainda!");return}
     const data=new Date().toLocaleString("pt-BR")
-    let txt=`PLATAFORMA ELEITORAL 2026 - RESULTADO FINAL\nCliente: ${codigoAtual}\nData: ${data}\nTotal de Votos: ${total}\n\nRANKING FINAL:\n`
-    txt+=`----------------------------------------\n`
+    let txt=`PLATAFORMA ELEITORAL 2026 - RESULTADO FINAL\nCliente: ${codigoAtual}\nData: ${data}\nTotal de Votos: ${total}\n\nRANKING FINAL:\n----------------------------------------\n`
     ranking.forEach((r,i)=>{
-      txt+=`${i+1}º LUGAR - ${r.nome} - ${r.partido} - Nº ${r.numero} - Cargo: ${r.cargo}\n`
-      txt+=`Votos: ${r.v} - ${r.pct}%\n`
-      txt+=`Propostas: ${(r.propostas||[]).join(" | ")}\n`
-      txt+=`----------------------------------------\n`
+      txt+=`${i+1}º LUGAR - ${r.nome} - ${r.partido} - Nº ${r.numero} - Cargo: ${r.cargo}\nVotos: ${r.v} - ${r.pct}%\nPropostas: ${(r.propostas||[]).join(" | ")}\n----------------------------------------\n`
     })
     const blob=new Blob([txt],{type:"text/plain"})
     const url=URL.createObjectURL(blob)
@@ -179,10 +190,9 @@ export default function AdminPage(){
           <div style={{textAlign:"center"}}>
             <div style={{width:70,height:70, background:"#fef9c3", borderRadius:"50%", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto", fontSize:32, border:"4px solid black"}}>🔒</div>
             <h1 style={{fontWeight:900, marginTop:12, fontSize:18}}>ADMIN BLOQUEADO</h1>
-            <p style={{fontSize:11,color:"#000", fontWeight:800, background:"#fee2e2", padding:"6px 10px", borderRadius:20, display:"inline-block", marginTop:6, border:"2px solid black"}}>🔐 Digite a senha para entrar</p>
           </div>
-          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA DO ADMIN" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box", fontSize:14}}/>
-          <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000", fontSize:13}}>ENTRAR →</button>
+          <input type="password" value={codInput} onChange={e=>setCodInput(e.target.value)} placeholder="SENHA DO ADMIN" style={{width:"100%",marginTop:14,padding:14,border:"4px solid black",borderRadius:12,textAlign:"center",fontWeight:900,boxSizing:"border-box"}}/>
+          <button onClick={liberar} style={{width:"100%",marginTop:10,background:"black",color:"#facc15",padding:14,borderRadius:12,fontWeight:900,border:"4px solid black", boxShadow:"4px 4px 0px #000"}}>ENTRAR →</button>
         </div>
       </div>
     )
@@ -190,38 +200,41 @@ export default function AdminPage(){
 
   return(
     <div style={{minHeight:"100vh",background:"#f1f5f9",fontFamily:"system-ui"}}>
-      <style>{`@media print{.no-print{display:none!important}}`}</style>
       <div style={{background:"linear-gradient(90deg,#0f172a,#1e293b)",color:"white",padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid black"}}>
         <div style={{display:"flex",alignItems:"center",gap:12}}>
-          <div style={{background:"#facc15",color:"black",width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,fontSize:14,border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>ADM</div>
+          <div style={{background:"#facc15",color:"black",width:40,height:40,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900,border:"3px solid black"}}>ADM</div>
           <div>
-            <div style={{fontWeight:900,fontSize:15, letterSpacing:"0.5px"}}>PAINEL ADMIN • 2026</div>
-            <div style={{fontSize:11,opacity:0.9, fontWeight:700, background:"white", color:"black", padding:"2px 8px", borderRadius:20, display:"inline-block", marginTop:3, border:"2px solid black"}}>{candidatos.length} candidatos • {total} votos</div>
+            <div style={{fontWeight:900,fontSize:15}}>PAINEL ADMIN • 2026</div>
+            <div style={{fontSize:11,fontWeight:700, background:"white", color:"black", padding:"2px 8px", borderRadius:20, display:"inline-block", border:"2px solid black"}}>{candidatos.length} candidatos • {total} votos • {codigoAtual}</div>
           </div>
+        </div>
         <div style={{display:"flex",gap:8}}>
-          <a href="/" className="no-print" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
-          {codigoAtual==="DONO" && <a href="/admin/vendas" className="no-print" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>}
-          <button onClick={()=>setLiberado(false)} className="no-print" style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black", boxShadow:"3px 3px 0px #000", cursor:"pointer"}}>SAIR</button>
+          <a href="/" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black"}}>Ver Site</a>
+          <button onClick={()=>setLiberado(false)} style={{background:"#ef4444",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,border:"3px solid black"}}>SAIR</button>
         </div>
       </div>
 
       <div style={{maxWidth:1200,margin:"0 auto",padding:16,display:"flex",flexDirection:"column",gap:16}}>
-        <div style={{background:"white",borderRadius:16,border:"4px solid black",overflow:"hidden", boxShadow:"6px 6px 0px #000"}}>
-          <div style={{padding:"16px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",borderBottom:"4px solid black",background:"#f8fafc"}}>
-            <div style={{fontWeight:900,fontSize:14, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, border:"3px solid black"}}>🏆 RANKING - {total} VOTOS</div>
-          </div>
-          <div style={{overflowX:"auto"}}>
-            <table style={{width:"100%",fontSize:12,borderCollapse:"collapse"}}>
-              <thead><tr style={{background:"black",color:"#facc15",textAlign:"left",fontSize:11, fontWeight:900}}><th style={{padding:"12px 14px"}}>#</th><th style={{padding:"12px 14px"}}>CANDIDATO</th><th style={{padding:"12px 14px"}}>PARTIDO</th><th style={{padding:"12px 14px"}}>Nº</th><th style={{padding:"12px 14px"}}>VOTOS</th><th style={{padding:"12px 14px"}}>%</th><th style={{padding:"12px 14px"}}>BARRA</th></tr></thead>
-              <tbody>
-                {total===0?<tr><td colSpan={7} style={{padding:24,textAlign:"center",fontWeight:900, fontSize:13}}>Nenhum voto ainda</td></tr>:ranking.map((r,i)=><tr key={i} style={{borderTop:"3px solid black",background:i===0?"#fef9c3":"white"}}><td style={{padding:"12px 14px",fontWeight:900}}>{i+1}º</td><td style={{padding:"12px 14px",display:"flex",alignItems:"center",gap:10}}><img src={r.foto} style={{width:34,height:34,borderRadius:"50%",border:"3px solid black"}}/><b style={{fontSize:13}}>{r.nome}</b></td><td style={{padding:"12px 14px",fontWeight:800}}>{r.partido}</td><td style={{padding:"12px 14px"}}><span style={{background:"black",color:"white",padding:"4px 10px",borderRadius:20,fontWeight:900,fontSize:12, border:"2px solid black"}}>{r.numero}</span></td><td style={{padding:"12px 14px",fontWeight:900, fontSize:13}}>{r.v}</td><td style={{padding:"12px 14px",fontWeight:900}}><span style={{background:i===0?"#facc15":"black", color:i===0?"black":"white", padding:"4px 8px", borderRadius:8}}>{r.pct}%</span></td><td style={{padding:"12px 14px",width:140}}><div style={{height:12,background:"white",border:"3px solid black",borderRadius:10}}><div style={{width:`${r.pct}%`,height:"100%",background:i===0?"#eab308":"black",borderRadius:10}}></div></div></td></tr>)}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
-          <div style={{fontWeight:900,fontSize:14,marginBottom:12,background:"black",color:"#facc15",padding:"8px 14px",borderRadius:10,display:"inline-block", border:"3px solid black"}}>➕ CADASTRAR CANDIDATO</div>
+        {codigoAtual==="DONO" && (
+          <div style={{background:"#fef9c3",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
+            <div style={{fontWeight:900,marginBottom:12, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, display:"inline-block", border:"3px solid black"}}>👑 PAINEL DONO - GERENCIAR CLIENTES</div>
+            <div style={{display:"flex",flexDirection:"column",gap:8}}>
+              {clientes.map((cli,i)=>(
+                <div key={i} style={{background:"white",border:"3px solid black",borderRadius:10,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                  <div>
+                    <b style={{fontSize:13}}>{cli.codigo}</b> <span style={{fontSize:11, background:"#f1f5f9", padding:"2px 6px", borderRadius:6, border:"2px solid black"}}>{cli.qtd} cands • {cli.totalVotos} votos</span>
+                  </div>
+                  <button onClick={()=>zerarClienteEspecifico(cli.codigo)} style={{background:"#fee2e2",color:"#dc2626",border:"3px solid black",borderRadius:8,padding:"6px 10px",fontSize:11,fontWeight:900,cursor:"pointer"}}>ZERAR ESSE CLIENTE</button>
+                </div>
+              ))}
+              {clientes.length===0 && <div style={{fontSize:12, fontWeight:700}}>Nenhum cliente ainda</div>}
+            </div>
+          </div>
+        )}
+
+        <div style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
+          <div style={{fontWeight:900,marginBottom:12,background:"black",color:"#facc15",padding:"8px 14px",borderRadius:10,display:"inline-block", border:"3px solid black"}}>➕ CADASTRAR CANDIDATO EM {codigoAtual}</div>
           <div style={{display:"grid",gridTemplateColumns:"1.5fr 0.8fr 0.3fr 140px 130px",gap:10,marginTop:10}}>
             <input value={nome} onChange={e=>setNome(e.target.value)} placeholder="Nome completo" style={{border:"3px solid black",borderRadius:10,padding:12,fontSize:13,fontWeight:800}}/>
             <input value={partido} onChange={e=>setPartido(e.target.value)} placeholder="Partido ex: PL" style={{border:"3px solid black",borderRadius:10,padding:12,fontSize:13,fontWeight:800}}/>
@@ -229,38 +242,36 @@ export default function AdminPage(){
             <select value={cargo} onChange={e=>setCargo(e.target.value)} style={{border:"3px solid black",borderRadius:10,padding:12,fontSize:13,fontWeight:800}}>
               <option>Presidente</option><option>Governador</option><option>Senador</option><option>Deputado Federal</option><option>Deputado Estadual</option><option>Prefeito</option><option>Vereador</option><option>Outros</option>
             </select>
-            <div><input ref={fileRef} type="file" accept="image/*" onChange={handleFoto} style={{display:"none"}}/><button onClick={()=>fileRef.current?.click()} style={{width:"100%",background:"#3b82f6",color:"white",border:"3px solid black",borderRadius:10,padding:12,fontSize:11,fontWeight:900,cursor:"pointer", boxShadow:"3px 3px 0px #000"}}>📸 SUBIR FOTO</button></div>
+            <div><input ref={fileRef} type="file" accept="image/*" onChange={handleFoto} style={{display:"none"}}/><button onClick={()=>fileRef.current?.click()} style={{width:"100%",background:"#3b82f6",color:"white",border:"3px solid black",borderRadius:10,padding:12,fontSize:11,fontWeight:900,cursor:"pointer"}}>📸 SUBIR FOTO</button></div>
           </div>
-          {cargo==="Outros" && <input value={cargoCustom} onChange={e=>setCargoCustom(e.target.value)} placeholder="Digite o cargo: ex: Vice-Prefeito..." style={{width:"100%",marginTop:10,border:"4px solid #eab308",borderRadius:10,padding:12,fontSize:13,boxSizing:"border-box",background:"#fef9c3",fontWeight:800}}/>}
-          <input value={link} onChange={e=>setLink(e.target.value)} placeholder="Link da foto ou use SUBIR FOTOS" style={{width:"100%",marginTop:10,border:"3px solid black",borderRadius:10,padding:12,fontSize:13,boxSizing:"border-box",fontWeight:700}}/>
-          <textarea value={propostas} onChange={e=>setPropostas(e.target.value)} placeholder="Propostas separadas por ; ex: Saúde; Educação; Segurança" style={{width:"100%",marginTop:10,border:"3px solid black",borderRadius:10,padding:12,fontSize:13,boxSizing:"border-box",fontWeight:700,minHeight:70}}/>
-          {link && <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10, background:"#dcfce7", border:"3px solid black", padding:10, borderRadius:10}}><img src={link} style={{width:60,height:60,borderRadius:"50%",border:"3px solid black"}}/><span style={{fontSize:12,color:"#000",fontWeight:900}}>✅ Foto pronta!</span></div>}
-          <button onClick={salvar} style={{width:"100%",marginTop:14,background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:14,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>ADICIONAR CANDIDATO +</button>
+          {cargo==="Outros" && <input value={cargoCustom} onChange={e=>setCargoCustom(e.target.value)} placeholder="Digite o cargo..." style={{width:"100%",marginTop:10,border:"4px solid #eab308",borderRadius:10,padding:12,background:"#fef9c3",fontWeight:800}}/>}
+          <input value={link} onChange={e=>setLink(e.target.value)} placeholder="Link da foto" style={{width:"100%",marginTop:10,border:"3px solid black",borderRadius:10,padding:12}}/>
+          <textarea value={propostas} onChange={e=>setPropostas(e.target.value)} placeholder="Propostas separadas por ;" style={{width:"100%",marginTop:10,border:"3px solid black",borderRadius:10,padding:12,minHeight:70}}/>
+          {link && <div style={{marginTop:10,display:"flex",alignItems:"center",gap:10, background:"#dcfce7", border:"3px solid black", padding:10, borderRadius:10}}><img src={link} style={{width:60,height:60,borderRadius:"50%",border:"3px solid black"}}/><span style={{fontWeight:900}}>✅ Foto pronta!</span></div>}
+          <button onClick={salvar} style={{width:"100%",marginTop:14,background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,cursor:"pointer"}}>ADICIONAR EM {codigoAtual} +</button>
         </div>
 
-        <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
-          <div style={{fontWeight:900,fontSize:14,marginBottom:12, background:"#f1f5f9", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>📋 LISTA - {candidatos.length} CANDIDATOS</div>
+        <div style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
+          <div style={{fontWeight:900,marginBottom:12}}>📋 LISTA - {candidatos.length} CANDIDATOS DE {codigoAtual}</div>
           <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {candidatos.map((c,i)=>(
-              <div key={i} style={{border:"3px solid black",background:"#f8fafc",borderRadius:12,padding:"12px 14px", boxShadow:"3px 3px 0px #000"}}>
+              <div key={i} style={{border:"3px solid black",background:"#f8fafc",borderRadius:12,padding:"12px 14px"}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:12}}><img src={c.foto} style={{width:40,height:40,borderRadius:"50%",border:"3px solid black"}}/><span style={{fontSize:13}}><b style={{fontSize:14}}>{c.nome}</b> • {c.partido} • Nº <span style={{background:"black", color:"white", padding:"2px 6px", borderRadius:6}}>{c.numero}</span> • {c.cargo}</span></div>
-                  <button onClick={()=>remover(i)} style={{background:"#fee2e2",color:"#dc2626",border:"3px solid black",width:32,height:32,borderRadius:10,fontWeight:900,cursor:"pointer", boxShadow:"2px 2px 0px #000"}}>X</button>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}><img src={c.foto} style={{width:40,height:40,borderRadius:"50%",border:"3px solid black"}}/><span><b>{c.nome}</b> • {c.partido} • {c.numero}</span></div>
+                  <button onClick={()=>remover(i)} style={{background:"#fee2e2",color:"#dc2626",border:"3px solid black",width:32,height:32,borderRadius:10,fontWeight:900}}>X</button>
                 </div>
-                <div style={{marginTop:8,background:"white",border:"3px solid black",borderRadius:8,padding:8,fontSize:11, fontWeight:600}}><b>Propostas:</b> {(c.propostas||[]).join(" • ")}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
-          <div style={{fontWeight:900,fontSize:14,marginBottom:12, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>🏁 FINALIZAR ELEIÇÃO</div>
+        <div style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-            <button onClick={baixarResultado} style={{background:"#22c55e",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>📥 BAIXAR RESULTADO</button>
-            <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>🗑 ZERAR VOTOS</button>
-            <button onClick={zerarCandidatosTotal} style={{background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>💣 ZERAR CANDIDATOS</button>
+            <button onClick={baixarResultado} style={{background:"#22c55e",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,cursor:"pointer"}}>📥 BAIXAR RESULTADO {codigoAtual}</button>
+            <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,cursor:"pointer"}}>🗑 ZERAR VOTOS {codigoAtual}</button>
+            <button onClick={zerarCandidatosAtual} style={{background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,cursor:"pointer"}}>💣 ZERAR CANDIDATOS {codigoAtual}</button>
           </div>
-          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera.txt do cliente ({codigoAtual}) • Zerar Votos = só votos • Zerar Candidatos = limpa tudo inclusive no site principal</p>
+          <p style={{fontSize:11,marginTop:8, background:"#f1f5f9", padding:8, borderRadius:8, border:"2px solid black"}}>Zerar afeta SÓ o {codigoAtual}. DONO pode zerar clientes lá em cima, um por um.</p>
         </div>
       </div>
     </div>
