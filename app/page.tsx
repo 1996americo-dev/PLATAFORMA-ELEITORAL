@@ -16,13 +16,13 @@ const CAND_DEFAULT = [
 ]
 
 export default function Home(){
-  const [CAND,setCAND]=React.useState(CAND_DEFAULT)
+  const [CAND,setCAND]=React.useState<any[]>([])
   const [liberado,setLiberado]=React.useState(false)
   const [codInput,setCodInput]=React.useState("")
   const [codigoAtual,setCodigoAtual]=React.useState("")
   const [cpf,setCpf]=React.useState("")
   const [cpfOk,setCpfOk]=React.useState(false)
-  const [votos,setVotos]=React.useState<number[]>(Array(CAND_DEFAULT.length).fill(0))
+  const [votos,setVotos]=React.useState<number[]>([])
   const [votoSel,setVotoSel]=React.useState<number|null>(null)
   const [bloqueado,setBloqueado]=React.useState(false)
   const [codigoBloq,setCodigoBloq]=React.useState("")
@@ -77,44 +77,68 @@ export default function Home(){
           return
         }
       }catch(e){}
-      let cc = null
-      let chaveUsada = ""
-      const chavesParaTentar = ["candidatos_"+codAtualFinal,"candidatos_DONO","candidatos_v21","candidatos_GERAL"]
-      for(const chave of chavesParaTentar){
-        const tentativa = localStorage.getItem(chave)
-        if(tentativa){
-          try{
-            const lista = JSON.parse(tentativa)
-            if(lista && lista.length > 0){ cc = tentativa; chaveUsada = chave; break }
-          }catch(e){}
-        }
-      }
-      if(cc){
+
+      // ===== LOGICA CORRIGIDA IGUAL DO ADMIN =====
+      const chaveAtual = "candidatos_"+codAtualFinal
+      const cc_atual = localStorage.getItem(chaveAtual)
+
+      if(cc_atual!== null){
+        // Se a chave ATUAL existe (mesmo que seja []), respeita ela
         try{
-          const listaAdmin=JSON.parse(cc)
+          const listaAdmin = JSON.parse(cc_atual)
           const convertidos=listaAdmin.map((x:any,idx:number)=>({
             nome:x.nome, part:x.partido?.split(" - ")[0]||x.partido||"OUTROS", num:x.numero, foto:x.foto,
             cor:["#22c55e","#f59e0b","#3b82f6","#ec4899","#ef4444","#a855f7","#14b8a6","#eab308","#f97316","#6366f1"][idx%10],
             cargo:x.cargo||"Presidente", propostas:x.propostas||["Sem propostas"]
           }))
-          if(convertidos.length>0){
-            setCAND(convertidos)
-            if(chaveUsada!== "candidatos_"+codAtualFinal){
-              localStorage.setItem("candidatos_"+codAtualFinal, JSON.stringify(listaAdmin))
-            }
-            const v=localStorage.getItem("votos_"+codAtualFinal) || localStorage.getItem("votos_v21") || localStorage.getItem("votos_DONO")
-            if(v){
-              try{
-                const votosSalvos = JSON.parse(v)
-                if(votosSalvos.length === convertidos.length){ setVotos(votosSalvos) } else { setVotos(Array(convertidos.length).fill(0)) }
-              }catch{ setVotos(Array(convertidos.length).fill(0)) }
-            } else { setVotos(Array(convertidos.length).fill(0)) }
+          setCAND(convertidos)
+          const v=localStorage.getItem("votos_"+codAtualFinal)
+          if(v!==null){
+            try{
+              const votosSalvos = JSON.parse(v)
+              setVotos(votosSalvos)
+            }catch{ setVotos(Array(convertidos.length).fill(0)) }
+          } else {
+            setVotos(Array(convertidos.length).fill(0))
           }
-        }catch(e){}
+        }catch(e){
+          setCAND([])
+          setVotos([])
+        }
       } else {
-        const v=localStorage.getItem("votos_"+codAtualFinal)
-        if(v){ setVotos(JSON.parse(v)) }
+        // Só tenta fallback e só cria padrão se NUNCA teve nada salvo pra esse cliente
+        let achouFallback = false
+        const chavesFallback = ["candidatos_GERAL","candidatos_DONO","candidatos_v21"]
+        for(const chave of chavesFallback){
+          if(chave === chaveAtual) continue
+          const tentativa = localStorage.getItem(chave)
+          if(tentativa!== null){
+            try{
+              const lista = JSON.parse(tentativa)
+              // Se fallback for [] também respeita como vazio, não continua procurando
+              const convertidos=lista.map((x:any,idx:number)=>({
+                nome:x.nome, part:x.partido?.split(" - ")[0]||x.partido||"OUTROS", num:x.numero, foto:x.foto,
+                cor:["#22c55e","#f59e0b","#3b82f6","#ec4899","#ef4444","#a855f7","#14b8a6","#eab308","#f97316","#6366f1"][idx%10],
+                cargo:x.cargo||"Presidente", propostas:x.propostas||["Sem propostas"]
+              }))
+              setCAND(convertidos)
+              localStorage.setItem(chaveAtual, tentativa)
+              const v = localStorage.getItem("votos_"+chave.replace("candidatos_","votos_")) || localStorage.getItem("votos_"+codAtualFinal)
+              if(v){ setVotos(JSON.parse(v)) } else { setVotos(Array(convertidos.length).fill(0)) }
+              achouFallback = true
+              break
+            }catch{}
+          }
+        }
+        if(!achouFallback){
+          // Primeira vez de verdade - cria os 11
+          setCAND(CAND_DEFAULT)
+          setVotos(Array(CAND_DEFAULT.length).fill(0))
+          localStorage.setItem(chaveAtual, JSON.stringify(CAND_DEFAULT.map(c=>({nome:c.nome, partido:c.part+ " - "+c.num, numero:c.num, foto:c.foto, cargo:c.cargo, propostas:c.propostas}))))
+          localStorage.setItem("votos_"+codAtualFinal, JSON.stringify(Array(CAND_DEFAULT.length).fill(0)))
+        }
       }
+
       const cv=localStorage.getItem("cpf_validado_"+codAtualFinal)
       if(cv){ setCpf(cv); setCpfOk(true) }
     })()
@@ -270,27 +294,37 @@ export default function Home(){
             <div style={{fontWeight:900,fontSize:15, background:"black", color:"#facc15", padding:"6px 12px", borderRadius:8}}>CANDIDATOS 2026</div>
             <div style={{fontSize:11,background:"#facc15",padding:"6px 12px",borderRadius:20, fontWeight:900, border:"3px solid black"}}>{CAND.length} candidatos</div>
           </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14,marginTop:16}}>
-            {CAND.map((c,i)=>(
-              <div key={i} onClick={()=>setVotoSel(i)} style={{border:votoSel===i?"4px solid #facc15":"3px solid black",borderRadius:16,padding:14,textAlign:"center",cursor:"pointer",background:votoSel===i?"#fefce8":"white", boxShadow:votoSel===i?"6px 6px 0px #eab308":"4px 4px 0px #000", transform:votoSel===i?"translate(-2px,-2px)":"none", transition:"all 0.15s"}}>
-                <div style={{position:"relative",display:"inline-block"}}>
-                  <img src={c.foto} alt="" style={{width:72,height:72,borderRadius:"50%",border:`4px solid black`, boxShadow:"3px 3px 0px #000"}}/>
-                  <div style={{position:"absolute",bottom:-6,right:-6,background:c.cor,color:"white",width:26,height:26,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,border:"3px solid black"}}>{c.num}</div>
+
+          {CAND.length === 0? (
+            <div style={{textAlign:"center", padding:60, border:"4px dashed black", borderRadius:16, marginTop:16, background:"#f8fafc"}}>
+              <div style={{fontSize:40}}>🗳️</div>
+              <div style={{fontWeight:900, fontSize:16, marginTop:10}}>NENHUM CANDIDATO CADASTRADO</div>
+              <div style={{fontSize:12, color:"#64748b", marginTop:6}}>Vá no ADMIN e cadastre os candidatos</div>
+              <a href="/admin" style={{display:"inline-block", marginTop:16, background:"black", color:"#facc15", padding:"10px 20px", borderRadius:10, textDecoration:"none", fontWeight:900, border:"3px solid black"}}>IR PARA ADMIN →</a>
+            </div>
+          ) : (
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(240px,1fr))",gap:14,marginTop:16}}>
+              {CAND.map((c,i)=>(
+                <div key={i} onClick={()=>setVotoSel(i)} style={{border:votoSel===i?"4px solid #facc15":"3px solid black",borderRadius:16,padding:14,textAlign:"center",cursor:"pointer",background:votoSel===i?"#fefce8":"white", boxShadow:votoSel===i?"6px 6px 0px #eab308":"4px 4px 0px #000", transform:votoSel===i?"translate(-2px,-2px)":"none", transition:"all 0.15s"}}>
+                  <div style={{position:"relative",display:"inline-block"}}>
+                    <img src={c.foto} alt="" style={{width:72,height:72,borderRadius:"50%",border:`4px solid black`, boxShadow:"3px 3px 0px #000"}}/>
+                    <div style={{position:"absolute",bottom:-6,right:-6,background:c.cor,color:"white",width:26,height:26,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:900,border:"3px solid black"}}>{c.num}</div>
+                  </div>
+                  <div style={{fontWeight:900,fontSize:14,marginTop:10}}>{c.nome}</div>
+                  <div style={{fontSize:10,color:"#000", fontWeight:700, background:"#f1f5f9", padding:"3px 8px", borderRadius:20, display:"inline-block", marginTop:4, border:"2px solid black"}}>{c.part} • Nº {c.num} • {c.cargo}</div>
+                  <div style={{marginTop:10,background:"#f8fafc",borderRadius:10,padding:10,textAlign:"left", border:"3px solid black"}}>
+                    <div style={{fontSize:9,fontWeight:900,color:"white", background:"black", display:"inline-block", padding:"2px 6px", borderRadius:6}}>📋 PROPOSTAS:</div>
+                    {c.propostas.map((p:any,j:number)=><div key={j} style={{fontSize:10,marginTop:4,lineHeight:"13px", fontWeight:600}}>• {p}</div>)}
+                  </div>
+                  <div style={{marginTop:10,display:"flex",justifyContent:"space-between",fontSize:11,background:"black", color:"white", padding:"6px 10px",borderRadius:8, fontWeight:800}}>
+                    <span>{votos[i]||0} votos</span>
+                    <b style={{background:"#facc15", color:"black", padding:"2px 6px", borderRadius:6}}>{total>0?Math.round((votos[i]||0)/total*100):0}%</b>
+                  </div>
+                  <button onClick={(e)=>{e.stopPropagation();votar(i)}} style={{width:"100%",marginTop:10,background:votoSel===i?"black":"#facc15",color:votoSel===i?"#facc15":"black",border:"3px solid black",borderRadius:10,padding:"10px 0",fontSize:12,fontWeight:900, boxShadow:"3px 3px 0px #000"}}>VOTAR {c.nome.split(" ")[0].toUpperCase()}</button>
                 </div>
-                <div style={{fontWeight:900,fontSize:14,marginTop:10}}>{c.nome}</div>
-                <div style={{fontSize:10,color:"#000", fontWeight:700, background:"#f1f5f9", padding:"3px 8px", borderRadius:20, display:"inline-block", marginTop:4, border:"2px solid black"}}>{c.part} • Nº {c.num} • {c.cargo}</div>
-                <div style={{marginTop:10,background:"#f8fafc",borderRadius:10,padding:10,textAlign:"left", border:"3px solid black"}}>
-                  <div style={{fontSize:9,fontWeight:900,color:"white", background:"black", display:"inline-block", padding:"2px 6px", borderRadius:6}}>📋 PROPOSTAS:</div>
-                  {c.propostas.map((p:any,j:number)=><div key={j} style={{fontSize:10,marginTop:4,lineHeight:"13px", fontWeight:600}}>• {p}</div>)}
-                </div>
-                <div style={{marginTop:10,display:"flex",justifyContent:"space-between",fontSize:11,background:"black", color:"white", padding:"6px 10px",borderRadius:8, fontWeight:800}}>
-                  <span>{votos[i]||0} votos</span>
-                  <b style={{background:"#facc15", color:"black", padding:"2px 6px", borderRadius:6}}>{total>0?Math.round((votos[i]||0)/total*100):0}%</b>
-                </div>
-                <button onClick={(e)=>{e.stopPropagation();votar(i)}} style={{width:"100%",marginTop:10,background:votoSel===i?"black":"#facc15",color:votoSel===i?"#facc15":"black",border:"3px solid black",borderRadius:10,padding:"10px 0",fontSize:12,fontWeight:900, boxShadow:"3px 3px 0px #000"}}>VOTAR {c.nome.split(" ")[0].toUpperCase()}</button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
