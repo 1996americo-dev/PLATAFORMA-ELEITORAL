@@ -24,12 +24,19 @@ export default function AdminPage(){
     }
     const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
     if(codAtual) setCodigoAtual(codAtual)
+
     const cc=localStorage.getItem("candidatos_"+codAtual)
     const v=localStorage.getItem("votos_"+codAtual)
-    if(cc){
-      setCandidatos(JSON.parse(cc))
+
+    // CORREÇÃO DO BUG: se for "[]" não recria os 11
+    if(cc!== null){
+      try{
+        setCandidatos(JSON.parse(cc))
+      } catch {
+        setCandidatos([])
+      }
     } else {
-      setCandidatos([
+      const defaults = [
         {nome:"Bolsonaro",partido:"PL - 22",numero:"22",foto:"https://i.pravatar.cc/150?img=1",cargo:"Presidente",propostas:["Economia liberal","Segurança"]},
         {nome:"Ciro Gomes",partido:"PDT - 12",numero:"12",foto:"https://i.pravatar.cc/150?img=2",cargo:"Presidente",propostas:["Desenvolvimento","Educação"]},
         {nome:"Eduardo Leite",partido:"PSDB - 45",numero:"45",foto:"https://i.pravatar.cc/150?img=3",cargo:"Presidente",propostas:["Gestão moderna","Inclusão"]},
@@ -41,12 +48,19 @@ export default function AdminPage(){
         {nome:"Tabata Amaral",partido:"PSB - 40",numero:"40",foto:"https://i.pravatar.cc/150?img=9",cargo:"Presidente",propostas:["Educação","Tecnologia"]},
         {nome:"Romeu Zema",partido:"NOVO - 30",numero:"30",foto:"https://i.pravatar.cc/150?img=10",cargo:"Presidente",propostas:["Menos impostos","Gestão"]},
         {nome:"Ronaldo Caiado",partido:"UNIAO - 44",numero:"44",foto:"https://i.pravatar.cc/150?img=11",cargo:"Presidente",propostas:["Saúde","Agro"]},
-      ])
+      ]
+      setCandidatos(defaults)
+      setVotos(Array(defaults.length).fill(0))
+      localStorage.setItem("candidatos_"+codAtual,JSON.stringify(defaults))
+      localStorage.setItem("votos_"+codAtual,JSON.stringify(Array(defaults.length).fill(0)))
     }
-    if(v){
-      setVotos(JSON.parse(v))
-    } else {
-      setVotos(Array(11).fill(0))
+
+    if(v!== null){
+      try{
+        setVotos(JSON.parse(v))
+      } catch {
+        setVotos([])
+      }
     }
   },[])
 
@@ -121,6 +135,20 @@ export default function AdminPage(){
     alert("✅ Votos zerados!")
   }
 
+  function zerarCandidatosTotal(){
+    if(!confirm(`⚠ ZERAR TODOS OS CANDIDATOS de ${codigoAtual}?`)) return
+    if(!confirm("Tem CERTEZA? O site vai ficar sem nenhum candidato!")) return
+    const codAtual = localStorage.getItem("codigo_liberado") || "GERAL"
+    localStorage.setItem("candidatos_"+codAtual, JSON.stringify([]))
+    localStorage.setItem("votos_"+codAtual, JSON.stringify([]))
+    // Garante que o site principal também zere
+    localStorage.setItem("candidatos_GERAL", JSON.stringify([]))
+    localStorage.setItem("votos_GERAL", JSON.stringify([]))
+    setCandidatos([])
+    setVotos([])
+    alert("✅ Todos os candidatos zerados em "+codAtual+" e GERAL! Agora dá F5 no site principal.")
+  }
+
   function baixarResultado(){
     if(total===0){alert("Nenhum voto ainda!");return}
     const data=new Date().toLocaleString("pt-BR")
@@ -170,7 +198,6 @@ export default function AdminPage(){
             <div style={{fontWeight:900,fontSize:15, letterSpacing:"0.5px"}}>PAINEL ADMIN • 2026</div>
             <div style={{fontSize:11,opacity:0.9, fontWeight:700, background:"white", color:"black", padding:"2px 8px", borderRadius:20, display:"inline-block", marginTop:3, border:"2px solid black"}}>{candidatos.length} candidatos • {total} votos</div>
           </div>
-        </div>
         <div style={{display:"flex",gap:8}}>
           <a href="/" className="no-print" style={{background:"white",color:"black",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Ver Site</a>
           {codigoAtual==="DONO" && <a href="/admin/vendas" className="no-print" style={{background:"#22c55e",color:"white",padding:"8px 14px",borderRadius:10,fontSize:11,fontWeight:900,textDecoration:"none",border:"3px solid black", boxShadow:"3px 3px 0px #000"}}>Vendas</a>}
@@ -228,11 +255,12 @@ export default function AdminPage(){
 
         <div className="no-print" style={{background:"white",borderRadius:16,border:"4px solid black",padding:18, boxShadow:"6px 6px 0px #000"}}>
           <div style={{fontWeight:900,fontSize:14,marginBottom:12, background:"black", color:"#facc15", padding:"8px 14px", borderRadius:10, border:"3px solid black", display:"inline-block"}}>🏁 FINALIZAR ELEIÇÃO</div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            <button onClick={baixarResultado} style={{background:"#22c55e",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>📥 BAIXAR RESULTADO FINAL</button>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
+            <button onClick={baixarResultado} style={{background:"#22c55e",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>📥 BAIXAR RESULTADO</button>
             <button onClick={zerarVotos} style={{background:"#ef4444",color:"white",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>🗑 ZERAR VOTOS</button>
+            <button onClick={zerarCandidatosTotal} style={{background:"black",color:"#facc15",border:"4px solid black",borderRadius:12,padding:14,fontWeight:900,fontSize:13,cursor:"pointer", boxShadow:"4px 4px 0px #000"}}>💣 ZERAR CANDIDATOS</button>
           </div>
-          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera.txt com ranking completo desse cliente ({codigoAtual}) • Zerar volta tudo pra 0 votos</p>
+          <p style={{fontSize:11,fontWeight:700,marginTop:8,background:"#f1f5f9",padding:"8px 10px",borderRadius:8,border:"2px solid black"}}>Baixar gera.txt do cliente ({codigoAtual}) • Zerar Votos = só votos • Zerar Candidatos = limpa tudo inclusive no site principal</p>
         </div>
       </div>
     </div>
