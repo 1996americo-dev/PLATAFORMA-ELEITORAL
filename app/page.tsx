@@ -228,7 +228,7 @@ export default function Home(){
         <div style={{background:"white",borderRadius:16,padding:24,width:380, border:"4px solid black", boxShadow:"8px 8px 0px #000"}}>
           <div style={{textAlign:"center"}}>
             <div style={{width:60,height:60,background:"#fef9c3",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto",fontSize:28, border:"3px solid black"}}>🔒</div>
-            <h1 style={{fontWeight:900,fontSize:20,marginTop:12}}>PLATAFORMA ELEITORAL 2026</h1>
+            <h1 style={{fontWeight:900,fontSize:20,marginTop:12}}>PLATAFORMA ELEITORAL </h1>
           </div>
           <div style={{background:"#f8fafc",border:"3px solid black",borderRadius:12,padding:12,marginTop:16,textAlign:"center"}}>
             <div style={{fontWeight:900,fontSize:12}}>🔒 ACESSO RESTRITO</div>
@@ -253,7 +253,7 @@ export default function Home(){
         <div style={{display:"flex",alignItems:"center",gap:12}}>
           <div style={{background:"#facc15",color:"black",width:36,height:36,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:900, border:"3px solid black"}}>26</div>
           <div>
-            <div style={{fontWeight:900,fontSize:14, letterSpacing:"0.5px"}}>PLATAFORMA ELEITORAL 2026</div>
+            <div style={{fontWeight:900,fontSize:14, letterSpacing:"0.5px"}}>PLATAFORMA ELEITORAL </div>
             <div style={{fontSize:10,opacity:0.9, fontWeight:700}}>{total} VOTOS • {CAND.length} CANDIDATOS</div>
           </div>
         </div>
